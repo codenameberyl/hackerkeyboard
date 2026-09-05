@@ -936,6 +936,20 @@ public class LatinIME extends InputMethodService implements
                 || mCompletionOn, false /* needsInputViewShown */);
         updateSuggestions();
 
+        // TEMPORARY diagnostic for the "no suggestion bar at all" report --
+        // remove once we've seen this once. Shows the exact state the
+        // visibility decision was made with, without needing adb/logcat.
+        Toast.makeText(this,
+                "diag: predOn=" + isPredictionOn()
+                        + " stripVisible=" + isCandidateStripVisible()
+                        + " showSugg=" + mShowSuggestions
+                        + " predOnForMode=" + mPredictionOnForMode
+                        + " container=" + (mCandidateViewContainer != null)
+                        + " containerVis=" + (mCandidateViewContainer != null
+                                ? mCandidateViewContainer.getVisibility() : -1)
+                        + " hasDict=" + (mSuggest != null && mSuggest.hasMainDictionary()),
+                Toast.LENGTH_LONG).show();
+
         // If the dictionary is not big enough, don't auto correct
         mHasDictionary = mSuggest.hasMainDictionary();
 
