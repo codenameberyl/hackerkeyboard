@@ -14,14 +14,13 @@ jobs:
         uses: actions/checkout@v4
 
       # NOTE: this JDK version must track whatever the current Android Gradle
-      # Plugin version in this branch requires (see build.gradle). AGP 3.2.1
-      # (the pre-modernization baseline) needs JDK 8; later AGP versions
-      # require newer JDKs, so this step gets bumped alongside AGP.
+      # Plugin version in this branch requires (see build.gradle). AGP 9.4.0
+      # requires JDK 17; bump this alongside any future AGP upgrade.
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
+          java-version: '17'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
