@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App-wide theme for the "chrome" activities (Main, LatinIMESettings,
+         InputLanguageSelection, PrefScreen*); the actual keyboard is drawn
+         by LatinKeyboardBaseView and skinned separately via the
+         key*Material* colors below / the user's keyboard-theme preference.
+
+         Theme.Material3.DayNight automatically switches between this file
+         and values-night/themes.xml based on the system day/night setting;
+         on Android 12+, HackersKeyboardApplication additionally overlays
+         Material You dynamic (wallpaper-based) color on top of this static
+         fallback palette via DynamicColors. -->
+    <style name="Theme.HackersKeyboard" parent="Theme.Material3.DayNight">
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+        <item name="colorSecondary">@color/md_theme_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+    </style>
+</resources>

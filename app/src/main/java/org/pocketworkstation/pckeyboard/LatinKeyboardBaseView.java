@@ -35,6 +35,7 @@ import android.graphics.Region.Op;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
+import android.os.Build;
 
 import org.pocketworkstation.pckeyboard.Keyboard.Key;
 
@@ -525,7 +526,13 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 int textStyle = a.getInt(attr, 0);
                 switch (textStyle) {
                     case 0:
-                        mKeyTextStyle = Typeface.DEFAULT;
+                        // Request a Medium (500) weight from the system's
+                        // variable default font for a more deliberate, modern
+                        // label look than plain Regular (400), where available
+                        // (Typeface.create(family, weight, italic) needs API 28).
+                        mKeyTextStyle = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+                                ? Typeface.create(Typeface.DEFAULT, 500, false)
+                                : Typeface.DEFAULT;
                         break;
                     case 1:
                         mKeyTextStyle = Typeface.DEFAULT_BOLD;

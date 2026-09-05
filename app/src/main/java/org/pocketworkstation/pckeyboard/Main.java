@@ -16,23 +16,25 @@
 
 package org.pocketworkstation.pckeyboard;
 
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.TextView.BufferType;
 
-public class Main extends Activity {
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.button.MaterialButton;
+
+public class Main extends AppCompatActivity {
 
     private final static String MARKET_URI = "market://search?q=pub:\"Klaus Weidner\"";
 
@@ -42,20 +44,24 @@ public class Main extends Activity {
         setContentView(R.layout.main);
         String html = getString(R.string.main_body);
         html += "<p><i>Version: " + getString(R.string.auto_version) + "</i></p>";
-        Spanned content = Html.fromHtml(html);
+        // Html.fromHtml(String) is deprecated since API 24; the single-arg
+        // form is kept only as the pre-24 fallback.
+        Spanned content = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                ? Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
+                : Html.fromHtml(html);
         TextView description = (TextView) findViewById(R.id.main_description);
         description.setMovementMethod(LinkMovementMethod.getInstance());
         description.setText(content, BufferType.SPANNABLE);
 
 
-        final Button setup1 = (Button) findViewById(R.id.main_setup_btn_configure_imes);
+        final MaterialButton setup1 = (MaterialButton) findViewById(R.id.main_setup_btn_configure_imes);
         setup1.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 startActivityForResult(new Intent(android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS), 0);
             }
         });
 
-        final Button setup2 = (Button) findViewById(R.id.main_setup_btn_set_ime);
+        final MaterialButton setup2 = (MaterialButton) findViewById(R.id.main_setup_btn_set_ime);
         setup2.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -63,16 +69,16 @@ public class Main extends Activity {
             }
         });
         
-        final Activity that = this;
+        final AppCompatActivity that = this;
 
-        final Button setup4 = (Button) findViewById(R.id.main_setup_btn_input_lang);
+        final MaterialButton setup4 = (MaterialButton) findViewById(R.id.main_setup_btn_input_lang);
         setup4.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 startActivityForResult(new Intent(that, InputLanguageSelection.class), 0);
             }
         });
 
-        final Button setup3 = (Button) findViewById(R.id.main_setup_btn_get_dicts);
+        final MaterialButton setup3 = (MaterialButton) findViewById(R.id.main_setup_btn_get_dicts);
         setup3.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent it = new Intent(Intent.ACTION_VIEW, Uri.parse(MARKET_URI));
@@ -88,7 +94,7 @@ public class Main extends Activity {
         });
         // PluginManager.getPluginDictionaries(getApplicationContext()); // why?
 
-        final Button setup5 = (Button) findViewById(R.id.main_setup_btn_settings);
+        final MaterialButton setup5 = (MaterialButton) findViewById(R.id.main_setup_btn_settings);
         setup5.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 startActivityForResult(new Intent(that, LatinIMESettings.class), 0);

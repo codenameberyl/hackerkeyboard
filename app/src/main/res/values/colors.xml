@@ -47,4 +47,16 @@
     <color name="key_background_pressed_material_light">#2637474F</color>
     <color name="key_text_color_material_light">#000000</color>
     <color name="key_hint_letter_color_material_light">#B337474F</color>
+
+<!--
+    App chrome theme colors (Theme.HackersKeyboard), light/static fallback.
+    Overridden on Android 12+ by Material You dynamic color (see
+    HackersKeyboardApplication), and by values-night/colors.xml when the
+    system is in dark mode. Seeded from the app's existing deep-purple
+    notification accent (0xff220044) for continuity.
+-->
+    <color name="md_theme_primary">#220044</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_secondary">#6A4C93</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
 </resources>

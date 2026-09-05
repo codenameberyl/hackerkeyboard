@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Dark counterpart of the Theme.HackersKeyboard colors in values/colors.xml
+    (see that file for context). Lighter, desaturated tones so text/icons
+    drawn on top keep sufficient contrast against dark M3 surfaces.
+-->
+<resources>
+    <color name="md_theme_primary">#C6A8FF</color>
+    <color name="md_theme_onPrimary">#38004D</color>
+    <color name="md_theme_secondary">#CFBCFF</color>
+    <color name="md_theme_onSecondary">#3A2C5B</color>
+</resources>

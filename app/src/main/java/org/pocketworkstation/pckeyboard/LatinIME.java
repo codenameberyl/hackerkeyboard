@@ -44,6 +44,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
@@ -3342,7 +3343,14 @@ public class LatinIME extends InputMethodService implements
     void vibrate(int len) {
         Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         if (v != null) {
-            v.vibrate(len);
+            // Vibrator.vibrate(long) is deprecated since API 26 in favor of
+            // VibrationEffect, which lets the system apply its own amplitude/
+            // haptic curve instead of a fixed-strength buzz.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(len, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                v.vibrate(len);
+            }
             return;
         }
 

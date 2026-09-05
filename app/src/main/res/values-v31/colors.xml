@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 12+ (API 31) override: the existing "Material Dark"/"Material
+    Light" keyboard skins (input_material_dark.xml / input_material_light.xml)
+    already read key_background_material_*/key_text_color_material_* from
+    values/colors.xml. On API 31+ the platform exposes a wallpaper-derived
+    tonal palette (system_neutral1_*) that we substitute here instead, so
+    those two skins automatically pick up Material You dynamic color with no
+    changes needed to the keyboard layouts or drawing code themselves.
+
+    The pressed/hint overlay colors and the dedicated AMOLED-black skin
+    (key_*_material_black) are intentionally left as static values/colors.xml
+    hex colors; true black should stay true black, and the semi-transparent
+    overlays already read reasonably over any base tone.
+-->
+<resources>
+    <color name="key_background_material_dark">@android:color/system_neutral1_800</color>
+    <color name="key_text_color_material_dark">@android:color/system_neutral1_50</color>
+
+    <color name="key_background_material_light">@android:color/system_neutral1_100</color>
+    <color name="key_text_color_material_light">@android:color/system_neutral1_900</color>
+</resources>
