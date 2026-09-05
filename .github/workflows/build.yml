@@ -1,0 +1,42 @@
+name: Android CI
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # NOTE: this JDK version must track whatever the current Android Gradle
+      # Plugin version in this branch requires (see build.gradle). AGP 3.2.1
+      # (the pre-modernization baseline) needs JDK 8; later AGP versions
+      # require newer JDKs, so this step gets bumped alongside AGP.
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Run lint
+        run: ./gradlew lint --stacktrace
+        continue-on-error: true
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results*.html
+          if-no-files-found: ignore
