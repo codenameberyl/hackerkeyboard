@@ -51,6 +51,8 @@ import android.preference.PreferenceManager;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.emoji2.emojipicker.EmojiPickerView;
+import com.google.android.material.button.MaterialButton;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -155,9 +157,11 @@ public class LatinIME extends InputMethodService implements
     // Contextual menu positions
     private static final int POS_METHOD = 0;
     private static final int POS_SETTINGS = 1;
+    private static final int POS_EMOJI = 2;
 
     // private LatinKeyboardView mInputView;
     private LinearLayout mCandidateViewContainer;
+    private View mEmojiPickerContainer;
     private CandidateView mCandidateView;
     private Suggest mSuggest;
     private CompletionInfo[] mCompletions;
@@ -3477,6 +3481,39 @@ public class LatinIME extends InputMethodService implements
         return sKeyboardSettings.suggestedPunctuation.contains(String.valueOf((char) code));
     }
 
+    // The emoji picker is shown by swapping it in as the IME's input view
+    // (InputMethodService.setInputView), same mechanism used for switching
+    // between the regular/symbols keyboards, rather than a new Keyboard
+    // mode -- this avoids touching the dozens of per-locale/per-skin
+    // keyboard XML layouts just to add one key.
+    private View getEmojiPickerContainer() {
+        if (mEmojiPickerContainer == null) {
+            mEmojiPickerContainer = getLayoutInflater().inflate(
+                    R.layout.emoji_picker_container, null);
+            EmojiPickerView emojiPickerView = mEmojiPickerContainer.findViewById(R.id.emoji_picker_view);
+            emojiPickerView.setOnEmojiPickedListener(item -> {
+                InputConnection ic = getCurrentInputConnection();
+                if (ic != null) {
+                    ic.commitText(item.getEmoji(), 1);
+                }
+            });
+            MaterialButton backButton = mEmojiPickerContainer.findViewById(R.id.emoji_picker_back);
+            backButton.setOnClickListener(v -> hideEmojiPicker());
+        }
+        return mEmojiPickerContainer;
+    }
+
+    private void showEmojiPicker() {
+        setCandidatesViewShown(false);
+        setInputView(getEmojiPickerContainer());
+    }
+
+    private void hideEmojiPicker() {
+        setInputView(mKeyboardSwitcher.getInputView());
+        setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn,
+                false /* needsInputViewShown */);
+    }
+
     private void showOptionsMenu() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -3484,7 +3521,8 @@ public class LatinIME extends InputMethodService implements
         builder.setNegativeButton(android.R.string.cancel, null);
         CharSequence itemSettings = getString(R.string.english_ime_settings);
         CharSequence itemInputMethod = getString(R.string.selectInputMethod);
-        builder.setItems(new CharSequence[] { itemInputMethod, itemSettings },
+        CharSequence itemEmoji = getString(R.string.selectEmoji);
+        builder.setItems(new CharSequence[] { itemInputMethod, itemSettings, itemEmoji },
                 new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface di, int position) {
@@ -3496,6 +3534,9 @@ public class LatinIME extends InputMethodService implements
                         case POS_METHOD:
                             ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
                                     .showInputMethodPicker();
+                            break;
+                        case POS_EMOJI:
+                            showEmojiPicker();
                             break;
                         }
                     }

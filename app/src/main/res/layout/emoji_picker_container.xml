@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Hosts androidx.emoji2's EmojiPickerView as an alternate IME input view,
+    swapped in for the normal keyboard view via LatinIME.showEmojiPicker()/
+    hideEmojiPicker() (see the "Emoji" entry in the options menu). The
+    "ABC" button switches back to the regular keyboard.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/emoji_picker_back"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:text="@string/emoji_picker_back_to_keyboard" />
+
+    <androidx.emoji2.emojipicker.EmojiPickerView
+            android:id="@+id/emoji_picker_view"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/emoji_picker_height" />
+
+</LinearLayout>

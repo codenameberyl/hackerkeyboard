@@ -51,4 +51,8 @@
          to user's finger. -->
     <dimen name="keyboard_vertical_correction">-0.05in</dimen>
     <dimen name="candidate_min_touchable_width">0.3in</dimen>
+
+    <!-- Roughly matches the on-screen keyboard's own height, so switching
+         to/from the emoji picker doesn't jump the app content much. -->
+    <dimen name="emoji_picker_height">260dip</dimen>
 </resources>
