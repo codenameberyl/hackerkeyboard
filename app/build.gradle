@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 
 android {
     namespace 'org.pocketworkstation.pckeyboard'
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         applicationId 'org.pocketworkstation.pckeyboard'
         minSdkVersion 23
-        targetSdkVersion 36
+        targetSdkVersion 37
         versionCode 1041001
         versionName "v1.41.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
