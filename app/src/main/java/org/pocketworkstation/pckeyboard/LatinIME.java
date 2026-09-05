@@ -58,8 +58,10 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
+import android.view.ContextThemeWrapper;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -3519,7 +3521,17 @@ public class LatinIME extends InputMethodService implements
     // keyboard XML layouts just to add one key.
     private View getEmojiPickerContainer() {
         if (mEmojiPickerContainer == null) {
-            mEmojiPickerContainer = getLayoutInflater().inflate(
+            // MaterialButton and EmojiPickerView both read Material3 theme
+            // attributes (colorPrimary, etc.) while inflating. An
+            // InputMethodService's own context/LayoutInflater isn't
+            // guaranteed to resolve those the way an Activity themed via
+            // the manifest's android:theme does, which is a known cause of
+            // inflation crashes for Material widgets used from a Service.
+            // Explicitly wrap the inflater's context in our theme to be
+            // sure, regardless of what the ambient service theme resolves to.
+            LayoutInflater themedInflater = getLayoutInflater().cloneInContext(
+                    new ContextThemeWrapper(this, R.style.Theme_HackersKeyboard));
+            mEmojiPickerContainer = themedInflater.inflate(
                     R.layout.emoji_picker_container, null);
             EmojiPickerView emojiPickerView = mEmojiPickerContainer.findViewById(R.id.emoji_picker_view);
             emojiPickerView.setOnEmojiPickedListener(item -> {
