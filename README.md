@@ -1,6 +1,8 @@
 ## Overview ##
 
-**WARNING:** *This is a rather ancient project that was originally developed back in 2011 based on the Android 2.3 (Gingerbread) AOSP keyboard. While it still works as-is for many users, it would need some major rewrites to work with newer APIs, and some features such as language switching or popup keys don't work right on modern Android systems. I'm not currently planning on significant updates, and it's possible that it will stop working on modern devices or will no longer be updateable via the Google Play store due to minimum API level requirements. Play Store requires targeting API level 29 (Android 10), while the code was written for API level 9 (Android 2.3) from 2011.*
+This is a fork of [klausw/hackerskeyboard](https://github.com/klausw/hackerskeyboard) (originally developed in 2011 for Android 2.3 Gingerbread) with a modernization pass applied on top: current Gradle/AGP, full AndroidX migration, current `compileSdk`/`targetSdk`, fixes for several Android 12+/13+/14+ runtime behavior changes, and a first pass at Material Design theming with Material You dynamic color support. See [CHANGELOG.md](CHANGELOG.md) for the detailed list of what changed and why, and the notes at the bottom of this file for known gaps and Play Store submission caveats.
+
+The description below is inherited from upstream and still describes the app's actual features and layouts accurately.
 
 Are you missing the key layout you're used to from your computer when using an Android device? This software keyboard has separate number keys, punctuation in the usual places, and arrow keys. It is based on the AOSP Gingerbread soft keyboard, so it supports multitouch for the modifier keys.
 
@@ -35,3 +37,18 @@ Comments, requests, or contributions? Join the [discussion group](http://groups.
 Application developers: see [the page about keyboard support in applications](https://github.com/klausw/hackerskeyboard/wiki/KeyboardSupportInApplications) if you want to enable the additional keys in your Android application, the same method also works for hardware USB or Bluetooth keyboards.
 
 ![hk-5row-en-s.png](hk-5row-en-s.png)
+
+## Modernization notes (this fork) ##
+
+Current build configuration: Gradle 9.7.1, Android Gradle Plugin 9.4.0, `compileSdk`/`targetSdk` 37 (Android 17), `minSdk` 23 (Android 6.0), full AndroidX, Material Components 1.14.0 with Material You dynamic color.
+
+**Known gaps / deferred work**, not addressed by this modernization pass:
+- `LatinIMESettings`, `InputLanguageSelection`, and the `PrefScreen*` activities still use the legacy `android.preference.PreferenceActivity`/`PreferenceScreen` framework classes rather than `PreferenceFragmentCompat`. They inherit the app's Material3 theme colors, but their row layouts are still the platform's default preference-row style, not true Material 3 list items. Migrating them is a larger, separate rewrite.
+- `LatinIMESettings`'s "official build" version label uses the deprecated `PackageManager.GET_SIGNATURES` API instead of `GET_SIGNING_CERTIFICATES`; it's a cosmetic label, not a functional or security issue.
+- No emulator/device testing existed before this pass; three minimal instrumented smoke tests were added (`app/src/androidTest`) and wired into CI across API 33/34/35, but they only confirm the app launches without crashing -- they are not a substitute for manually exercising the actual keyboard (typing, language switching, popup keys, all the selectable keyboard skins) on a real device.
+
+**Before Play Store submission**, review:
+- **Privacy policy / data safety form.** The app posts a notification (opt-in preference) and reads/writes the user dictionary; Play Console's Data Safety section needs to accurately reflect what the app does. This wasn't audited as part of this pass.
+- **Screenshots and store listing** almost certainly predate this UI pass (Material theming, dynamic color) and should be refreshed.
+- **`versionCode`/`versionName`** were left untouched by this modernization (still `1041001` / `v1.41.1`); bump them before releasing.
+- **Manual device testing** (see the gap above) should happen before release, especially the parts of the app CI cannot exercise: actually enabling the IME and typing with it, language switching, and the Material You dynamic color appearance on a real Android 12+ device with various wallpapers.
