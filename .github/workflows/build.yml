@@ -28,6 +28,13 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
 
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
       - name: Run lint
         run: ./gradlew lint --stacktrace
         continue-on-error: true
@@ -47,14 +54,11 @@ jobs:
   # Phase 5 testing request. Requires KVM on the runner; GitHub-hosted
   # ubuntu-latest runners have nested virtualization enabled for this.
   #
-  # API 33 is marked continue-on-error: its emulator image has reliably
-  # timed out waiting to boot on this runner across two separate attempts
-  # (600s and 900s timeouts alike, on an otherwise-identical config that
-  # boots API 34/35 fine in ~8 min) -- a real, repeatable environment
-  # limitation rather than a one-off flake. It's still run so a future fix
-  # (upstream runner image update, etc.) shows up automatically, but it no
-  # longer blocks the workflow. See README.md's "Modernization notes" for
-  # the manual Android 13 testing this substitutes for.
+  # API 33 is marked continue-on-error: its emulator image is slow/flaky to
+  # boot on this runner (timed out twice at 600s/900s, then passed twice
+  # more at 900s) while API 34/35 boot reliably in ~8 min every time. It
+  # still runs so its actual pass/fail is visible, it just doesn't block
+  # the workflow on a slow boot. See README.md's "Modernization notes".
   instrumented-tests:
     needs: build
     runs-on: ubuntu-latest
