@@ -9,7 +9,6 @@ import android.view.inputmethod.InputMethodManager;
 public class NotificationReceiver extends BroadcastReceiver {
     static final String TAG = "PCKeyboard/Notification";
     static public final String ACTION_SHOW = "org.pocketworkstation.pckeyboard.SHOW";
-    static public final String ACTION_SETTINGS = "org.pocketworkstation.pckeyboard.SETTINGS";
 
     private LatinIME mIME;
 
@@ -30,8 +29,11 @@ public class NotificationReceiver extends BroadcastReceiver {
             if (imm != null) {
                 imm.showSoftInputFromInputMethod(mIME.mToken, InputMethodManager.SHOW_FORCED);
             }
-        } else if (action.equals(ACTION_SETTINGS)) {
-            context.startActivity(new Intent(mIME, LatinIMESettings.class));
         }
+        // The settings notification action used to route through this receiver
+        // (ACTION_SETTINGS -> startActivity()), but that "notification
+        // trampoline" pattern is blocked on Android 14+ for apps targeting
+        // API 34+. LatinIME now launches LatinIMESettings directly via
+        // PendingIntent.getActivity() instead.
     }
 }

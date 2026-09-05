@@ -22,6 +22,7 @@ import com.google.android.voiceime.VoiceRecognitionTrigger;
 
 import org.xmlpull.v1.XmlPullParserException;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -32,6 +33,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -47,6 +49,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -412,7 +415,12 @@ public class LatinIME extends InputMethodService implements
         pFilter.addAction("android.intent.action.PACKAGE_ADDED");
         pFilter.addAction("android.intent.action.PACKAGE_REPLACED");
         pFilter.addAction("android.intent.action.PACKAGE_REMOVED");
-        registerReceiver(mPluginManager, pFilter);
+        // These are protected system broadcasts; no other app can send them,
+        // so NOT_EXPORTED is correct. Context.registerReceiver(receiver, filter)
+        // without an exported flag throws SecurityException at runtime once
+        // targetSdk >= 33 (Android 13).
+        ContextCompat.registerReceiver(this, mPluginManager, pFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED);
 
         LatinIMEUtil.GCUtils.getInstance().reset();
         boolean tryGC = true;
@@ -431,7 +439,10 @@ public class LatinIME extends InputMethodService implements
         // register to receive ringer mode changes for silent mode
         IntentFilter filter = new IntentFilter(
                 AudioManager.RINGER_MODE_CHANGED_ACTION);
-        registerReceiver(mReceiver, filter);
+        // System broadcast; see the mPluginManager registration above for why
+        // NOT_EXPORTED.
+        ContextCompat.registerReceiver(this, mReceiver, filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED);
         prefs.registerOnSharedPreferenceChangeListener(this);
         setNotification(mKeyboardNotification);
     }
@@ -488,16 +499,30 @@ public class LatinIME extends InputMethodService implements
             // TODO: clean this up?
             mNotificationReceiver = new NotificationReceiver(this);
             final IntentFilter pFilter = new IntentFilter(NotificationReceiver.ACTION_SHOW);
-            pFilter.addAction(NotificationReceiver.ACTION_SETTINGS);
-            registerReceiver(mNotificationReceiver, pFilter);
-            
+            // Only our own notification's PendingIntent sends this action, so
+            // NOT_EXPORTED also tightens this up: no other app can trigger it
+            // anymore (previously implicitly exported).
+            ContextCompat.registerReceiver(this, mNotificationReceiver, pFilter,
+                    ContextCompat.RECEIVER_NOT_EXPORTED);
+
+            // PendingIntent.FLAG_IMMUTABLE is required since Android 12
+            // (targeting S+ without FLAG_IMMUTABLE/FLAG_MUTABLE throws).
+            // These intents carry no fillIn data, so immutable is correct.
             Intent notificationIntent = new Intent(NotificationReceiver.ACTION_SHOW);
-            PendingIntent contentIntent = PendingIntent.getBroadcast(getApplicationContext(), 1, notificationIntent, 0);
+            PendingIntent contentIntent = PendingIntent.getBroadcast(getApplicationContext(), 1,
+                    notificationIntent, PendingIntent.FLAG_IMMUTABLE);
             //PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-            Intent configIntent = new Intent(NotificationReceiver.ACTION_SETTINGS);
+            // Launch the settings Activity directly via PendingIntent.getActivity()
+            // rather than routing it through NotificationReceiver's ACTION_SETTINGS
+            // (a BroadcastReceiver calling startActivity()). That "notification
+            // trampoline" pattern is blocked outright on Android 14+ for apps
+            // targeting API 34+, so the button would silently stop working.
+            Intent configIntent = new Intent(this, LatinIMESettings.class)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             PendingIntent configPendingIntent =
-                    PendingIntent.getBroadcast(getApplicationContext(), 2, configIntent, 0);
+                    PendingIntent.getActivity(getApplicationContext(), 2, configIntent,
+                            PendingIntent.FLAG_IMMUTABLE);
 
             String title = "Show Hacker's Keyboard";
             String body = "Select this to open the keyboard. Disable in settings.";
@@ -531,8 +556,14 @@ public class LatinIME extends InputMethodService implements
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
-            // notificationId is a unique int for each notification that you must define
-            notificationManager.notify(NOTIFICATION_ONGOING_ID, mBuilder.build());
+            // POST_NOTIFICATIONS is a runtime permission on API 33+ (requested
+            // from LatinIMESettings when this preference is turned on); skip
+            // silently if it hasn't been granted rather than crash/lint-fail.
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                // notificationId is a unique int for each notification that you must define
+                notificationManager.notify(NOTIFICATION_ONGOING_ID, mBuilder.build());
+            }
 
         } else if (mNotificationReceiver != null) {
             mNotificationManager.cancel(NOTIFICATION_ONGOING_ID);

@@ -19,6 +19,7 @@ package org.pocketworkstation.pckeyboard;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.app.backup.BackupManager;
 import android.content.DialogInterface;
@@ -27,6 +28,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -36,6 +38,8 @@ import android.preference.PreferenceGroup;
 import android.text.AutoText;
 import android.text.InputType;
 import android.util.Log;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class LatinIMESettings extends PreferenceActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener,
@@ -51,6 +55,8 @@ public class LatinIMESettings extends PreferenceActivity
 
     // Dialog ids
     private static final int VOICE_INPUT_CONFIRM_DIALOG = 0;
+
+    private static final int REQUEST_POST_NOTIFICATIONS = 1;
 
     private CheckBoxPreference mQuickFixes;
     private ListPreference mVoicePreference;
@@ -154,9 +160,31 @@ public class LatinIMESettings extends PreferenceActivity
                 showVoiceConfirmation();
             }
         }
+        // Android 13+ requires the POST_NOTIFICATIONS runtime permission to
+        // actually show the optional persistent "keyboard notification".
+        // Without this, turning the preference on would silently do nothing.
+        if (key.equals(LatinIME.PREF_KEYBOARD_NOTIFICATION)
+                && prefs.getBoolean(key, false)
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[] { Manifest.permission.POST_NOTIFICATIONS },
+                    REQUEST_POST_NOTIFICATIONS);
+        }
         mVoiceOn = !(prefs.getString(VOICE_SETTINGS_KEY, mVoiceModeOff).equals(mVoiceModeOff));
         updateVoiceModeSummary();
         updateSummaries();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            int[] grantResults) {
+        // Nothing else to do: if denied, the keyboard notification preference
+        // stays on but setNotification() will simply be unable to show it
+        // until the user grants the permission (in system Settings, or by
+        // toggling the preference off and on again).
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     static Map<Integer, String> INPUT_CLASSES = new HashMap<Integer, String>();

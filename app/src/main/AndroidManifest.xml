@@ -3,6 +3,24 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
     <uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
+    <!-- Runtime (dangerous) permission on API 33+, required to show the
+         optional persistent "keyboard notification" preference. Requested
+         at runtime from LatinIMESettings when that preference is enabled. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Package visibility (Android 11+, API 30+): without these,
+         PluginManager's PackageManager.queryIntentActivities()/
+         queryBroadcastReceivers() calls for these two actions silently
+         return empty lists, and installed dictionary-pack add-ons stop
+         being found. -->
+    <queries>
+        <intent>
+            <action android:name="org.pocketworkstation.DICT" />
+        </intent>
+        <intent>
+            <action android:name="com.menny.android.anysoftkeyboard.DICTIONARY" />
+        </intent>
+    </queries>
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.faketouch" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
