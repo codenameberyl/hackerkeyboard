@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -34,6 +36,36 @@ jobs:
           name: debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # A rolling pre-release, re-published (same tag, assets replaced) on
+      # every push to this branch, so there's always a downloadable APK on
+      # the repo's Releases page without needing CI artifact access or a
+      # local Android SDK. Gated to this branch specifically -- re-point
+      # (or remove) this when merging to the default branch.
+      - name: Publish rolling debug release
+        if: github.ref == 'refs/heads/claude/hackers-keyboard-modernize-cz10e9'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-debug-build
+          name: Latest debug build (auto-updated)
+          prerelease: true
+          body: |
+            Automatically republished on every push to
+            `claude/hackers-keyboard-modernize-cz10e9`. Currently built from
+            commit ${{ github.sha }}.
+
+            **This is an unsigned/debug-signed build for manual testing, not
+            a Play Store release.** If you already have Hacker's Keyboard
+            installed from the Play Store, you'll need to uninstall it first
+            -- Android won't install this over it (different signing key,
+            same package name).
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CHANGELOG.md)
+            for what's changed, and the README's "Manual testing" section
+            for what to check.
+          files: app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run lint
         run: ./gradlew lint --stacktrace
