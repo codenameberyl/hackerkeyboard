@@ -80,4 +80,9 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
+          # Default is 600s; API 33's image hit that ceiling once (boot
+          # started normally, just didn't finish in time) while 34/35 booted
+          # fine in ~8 min under the same config -- give real headroom
+          # instead of relying on a lucky re-run.
+          emulator-boot-timeout: 900
           script: ./gradlew connectedDebugAndroidTest --stacktrace
