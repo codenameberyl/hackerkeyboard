@@ -1514,7 +1514,16 @@ public class LatinIME extends InputMethodService implements
             // Input method selector is available as a button in the soft key area, so just launch
             // HK settings directly. This also works around the alert dialog being clipped
             // in Android O.
-            startActivity(new Intent(this, LatinIMESettings.class));
+            //
+            // BUG (found via real-device testing): this used to call
+            // startActivity() directly with no flags. Starting an Activity
+            // from a Service context without FLAG_ACTIVITY_NEW_TASK throws
+            // AndroidRuntimeException ("Calling startActivity() from outside
+            // of an Activity context requires the FLAG_ACTIVITY_NEW_TASK
+            // flag") -- i.e. it crashed on every tap of the settings key.
+            // launchSettings() (used elsewhere for the same purpose) already
+            // sets that flag correctly, so just reuse it.
+            launchSettings();
         } else {
             // Show an options menu with choices to change input method or open HK settings.
             if (!isShowingOptionDialog()) {
@@ -1524,8 +1533,16 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void onOptionKeyLongPressed() {
+        // Used to call showInputMethodPicker() directly, which meant
+        // showOptionsMenu()'s dialog (Select input method / Settings /
+        // Emoji) was unreachable on any Android N+ device via the settings
+        // key: a short tap goes straight to Settings (see
+        // onOptionKeyPressed()) and long-press bypassed the menu entirely.
+        // Routing through the menu instead keeps "select input method" one
+        // tap away (it's still the first item) while making Emoji
+        // reachable too.
         if (!isShowingOptionDialog()) {
-            showInputMethodPicker();
+            showOptionsMenu();
         }
     }
 
