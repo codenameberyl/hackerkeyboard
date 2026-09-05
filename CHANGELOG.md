@@ -102,7 +102,17 @@ a `PreferenceFragmentCompat` rewrite.
   `LatinIMESettings` each launch and reach `RESUMED`, and the `LatinIME`
   service is still correctly declared/exported. These run on real emulators
   (API 33/34/35, i.e. Android 13/14/15) in CI.
-- These are launch-only smoke tests, not a substitute for manually
-  exercising the keyboard itself (typing, language switching, popup keys,
-  the various keyboard skins) -- see the README's "Modernization notes" for
-  what still needs manual verification before a release.
+- API 34 and 35 pass reliably on real emulators. API 33 does not: its
+  emulator image consistently timed out waiting to boot on the CI runner
+  across two separate attempts (600s, then 900s, timeout), while the
+  identical config boots 34/35 in ~8 minutes. This looks like a real
+  limitation of that specific runner/image combination rather than a flake
+  or an app problem, so the API 33 CI job is marked `continue-on-error`
+  (still runs, doesn't block the workflow) instead of being force-fixed or
+  silently dropped. See the README's "Manual testing" section for the
+  Android 13 verification this substitutes for.
+- These are launch-only smoke tests either way, not a substitute for
+  manually exercising the keyboard itself (typing, language switching,
+  popup keys, the various keyboard skins) -- see the README's
+  "Modernization notes" for what still needs manual verification before a
+  release.
