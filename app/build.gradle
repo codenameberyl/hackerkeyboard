@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// Debug builds published from CI were hard to tell apart -- same versionCode/
+// versionName on every push meant a device could be running a stale cached
+// APK with no visible way to tell. GITHUB_RUN_NUMBER (always increasing) and
+// GITHUB_SHA (exact commit) are only set in CI; local builds fall back to
+// the static values below, unaffected.
+def ciRunNumber = System.getenv("GITHUB_RUN_NUMBER")
+def ciShortSha = System.getenv("GITHUB_SHA") != null
+        ? System.getenv("GITHUB_SHA").substring(0, 7) : null
+
 android {
     namespace 'org.pocketworkstation.pckeyboard'
     compileSdk 37
@@ -8,7 +17,7 @@ android {
         applicationId 'org.pocketworkstation.pckeyboard'
         minSdkVersion 23
         targetSdkVersion 37
-        versionCode 1041001
+        versionCode ciRunNumber != null ? (1041001 + Integer.parseInt(ciRunNumber)) : 1041001
         versionName "v1.41.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -28,7 +37,8 @@ android {
             // conflicting with it (same applicationId + different signing
             // key would otherwise make Android refuse the install).
             applicationIdSuffix '.codenameberyl'
-            versionNameSuffix '-codenameberyl'
+            versionNameSuffix ciShortSha != null
+                    ? "-codenameberyl-${ciShortSha}" : '-codenameberyl-local'
         }
         release {
             minifyEnabled false
