@@ -949,28 +949,6 @@ public class LatinIME extends InputMethodService implements
                 || mCompletionOn, false /* needsInputViewShown */);
         updateSuggestions();
 
-        // TEMPORARY diagnostic for the "no suggestion bar at all" report --
-        // remove once we've seen this once. Shows the exact state the
-        // visibility decision was made with, without needing adb/logcat.
-        // Confirmed on the last round: hasDict=true, dictSize=841005, so the
-        // dictionary-lookup fix landed and the dictionary itself is fine.
-        // What's still unconfirmed is whether the candidate-strip *view*
-        // exists and is actually visible -- a single long toast was getting
-        // cut off before reaching those fields (Android's toast view has a
-        // line/width limit, it doesn't just wrap), so this is now two short
-        // toasts, each guaranteed to fit on one line.
-        Toast.makeText(this,
-                "diag1: hasDict=" + (mSuggest != null && mSuggest.hasMainDictionary())
-                        + " size=" + (mSuggest != null ? mSuggest.getMainDictionarySize() : -1)
-                        + " predOn=" + isPredictionOn(),
-                Toast.LENGTH_LONG).show();
-        Toast.makeText(this,
-                "diag2: container=" + (mCandidateViewContainer != null)
-                        + " vis=" + (mCandidateViewContainer != null
-                                ? mCandidateViewContainer.getVisibility() : -1)
-                        + " showSugg=" + mShowSuggestions,
-                Toast.LENGTH_LONG).show();
-
         // If the dictionary is not big enough, don't auto correct
         mHasDictionary = mSuggest.hasMainDictionary();
 
