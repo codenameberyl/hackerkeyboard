@@ -594,8 +594,19 @@ public class LatinIME extends InputMethodService implements
      *
      * @return returns array of dictionary resource ids
      */
-    /* package */static int[] getDictionary(Resources res) {
-        String packageName = LatinIME.class.getPackage().getName();
+    /* package */static int[] getDictionary(Resources res, String packageName) {
+        // BUG (found via real-device testing): this used to hardcode
+        // packageName = LatinIME.class.getPackage().getName(), i.e. the
+        // compile-time Java/namespace package ("org.pocketworkstation.
+        // pckeyboard"). Resources.getIdentifier()'s defPackage argument has
+        // to match the app's *runtime* package name (getPackageName()),
+        // which is applicationId, not the namespace -- they're only the
+        // same when applicationId has no suffix. The debug build applies
+        // applicationIdSuffix '.codenameberyl', so the hardcoded name never
+        // matched, getIdentifier("main", "raw", ...) always returned 0, and
+        // the bundled main.dict silently failed to load -- no crash, just
+        // permanently empty suggestions. Callers now pass the real runtime
+        // package name.
         XmlResourceParser xrp = res.getXml(R.xml.dictionary);
         ArrayList<Integer> dictionaries = new ArrayList<Integer>();
 
@@ -647,7 +658,7 @@ public class LatinIME extends InputMethodService implements
         mQuickFixes = sp.getBoolean(PREF_QUICK_FIXES, getResources()
                 .getBoolean(R.bool.default_quick_fixes));
 
-        int[] dictionaries = getDictionary(orig);
+        int[] dictionaries = getDictionary(orig, getPackageName());
         mSuggest = new Suggest(this, dictionaries);
         updateAutoTextEnabled(saveLocale);
         if (mUserDictionary != null)
@@ -1518,14 +1529,29 @@ public class LatinIME extends InputMethodService implements
             // in Android O.
             //
             // BUG (found via real-device testing): this used to call
-            // startActivity() directly with no flags. Starting an Activity
-            // from a Service context without FLAG_ACTIVITY_NEW_TASK throws
-            // AndroidRuntimeException ("Calling startActivity() from outside
-            // of an Activity context requires the FLAG_ACTIVITY_NEW_TASK
-            // flag") -- i.e. it crashed on every tap of the settings key.
-            // launchSettings() (used elsewhere for the same purpose) already
-            // sets that flag correctly, so just reuse it.
-            launchSettings();
+            // startActivity() directly with no flags, which crashed with
+            // "Calling startActivity() from outside of an Activity context
+            // requires the FLAG_ACTIVITY_NEW_TASK flag". Reusing
+            // launchSettings() (which sets that flag) did NOT fix it,
+            // though -- it still crashed on every tap, while the exact same
+            // launchSettings() call reached via the long-press options menu
+            // worked fine. The difference is the call stack: onKey() here
+            // runs synchronously inside PointerTracker's touch-event
+            // handling for this very key press (see
+            // LatinKeyboardBaseView/PointerTracker), so launchSettings() ->
+            // handleClose() -> requestHideSelf(0) tears down the current
+            // input view while that touch dispatch is still unwinding.
+            // Going through the options dialog instead works because its
+            // "Settings" item click is a separate, later event on a
+            // different window, well after the key's touch event finished.
+            // Posting through the handler (same pattern already used by
+            // switchToKeyboardView() for the same class of problem) defers
+            // the close+launch until after this touch event is done.
+            mHandler.post(new Runnable() {
+                public void run() {
+                    launchSettings();
+                }
+            });
         } else {
             // Show an options menu with choices to change input method or open HK settings.
             if (!isShowingOptionDialog()) {
