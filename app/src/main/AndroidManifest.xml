@@ -33,7 +33,8 @@
             android:hardwareAccelerated="false"
             android:killAfterRestore="false"
             android:icon="@drawable/icon"
-            android:theme="@style/Theme.HackersKeyboard">
+            android:theme="@style/Theme.HackersKeyboard"
+            android:windowOptOutEdgeToEdgeEnforcement="true">
 
         <service android:name="LatinIME"
                 android:label="@string/english_ime_name"

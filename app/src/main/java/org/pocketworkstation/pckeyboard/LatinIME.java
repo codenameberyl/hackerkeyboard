@@ -163,6 +163,9 @@ public class LatinIME extends InputMethodService implements
 
     // private LatinKeyboardView mInputView;
     private LinearLayout mCandidateViewContainer;
+    // TEMPORARY diagnostic round 2 one-shot guard -- see onStartInputView()
+    // and setSuggestions().
+    private boolean mDiagSuggestionCountShown = true;
     private View mEmojiPickerContainer;
     private CandidateView mCandidateView;
     private Suggest mSuggest;
@@ -948,6 +951,29 @@ public class LatinIME extends InputMethodService implements
         setCandidatesViewShownInternal(isCandidateStripVisible()
                 || mCompletionOn, false /* needsInputViewShown */);
         updateSuggestions();
+
+        // TEMPORARY diagnostic round 2: the previous round confirmed
+        // hasDict/predOn/container/showSugg are all healthy, but those only
+        // check our own view's local "visible" flag, not whether the system
+        // actually laid it out on screen with a real size -- isShown()
+        // additionally requires every ancestor to be attached+visible, which
+        // a flag check alone can't catch. Posted (not run inline) so the
+        // layout pass from setCandidatesViewShownInternal() above has had a
+        // chance to run first. Also resets the one-shot flag consumed by
+        // setSuggestions() below, so the *next* keystroke's actual suggestion
+        // count gets reported too -- separates "the strip isn't rendered at
+        // all" from "the strip renders but getSuggestions() returns nothing".
+        mDiagSuggestionCountShown = false;
+        mHandler.post(new Runnable() {
+            public void run() {
+                boolean shown = mCandidateViewContainer != null && mCandidateViewContainer.isShown();
+                int w = mCandidateViewContainer != null ? mCandidateViewContainer.getWidth() : -1;
+                int h = mCandidateViewContainer != null ? mCandidateViewContainer.getHeight() : -1;
+                Toast.makeText(LatinIME.this,
+                        "diag3: isShown=" + shown + " w=" + w + " h=" + h,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
 
         // If the dictionary is not big enough, don't auto correct
         mHasDictionary = mSuggest.hasMainDictionary();
@@ -2560,6 +2586,21 @@ public class LatinIME extends InputMethodService implements
         if (mCandidateView != null) {
             mCandidateView.setSuggestions(suggestions, completions,
                     typedWordValid, haveMinimalSuggestion);
+        }
+
+        // TEMPORARY diagnostic round 2, one-shot per input session (flag
+        // reset in onStartInputView): reports what the *first* real
+        // suggestion computation after focusing a field actually returned,
+        // to tell apart "the strip isn't being rendered at all" (see the
+        // isShown()/w/h toast in onStartInputView) from "it renders, but
+        // getSuggestions() itself comes back empty for real typed text."
+        if (!mDiagSuggestionCountShown) {
+            mDiagSuggestionCountShown = true;
+            int count = suggestions != null ? suggestions.size() : 0;
+            String first = (suggestions != null && !suggestions.isEmpty())
+                    ? String.valueOf(suggestions.get(0)) : "none";
+            Toast.makeText(this, "diag4: suggCount=" + count + " first=" + first,
+                    Toast.LENGTH_LONG).show();
         }
     }
 
