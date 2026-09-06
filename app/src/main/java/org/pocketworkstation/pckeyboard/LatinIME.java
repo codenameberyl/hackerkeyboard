@@ -952,15 +952,18 @@ public class LatinIME extends InputMethodService implements
         // TEMPORARY diagnostic for the "no suggestion bar at all" report --
         // remove once we've seen this once. Shows the exact state the
         // visibility decision was made with, without needing adb/logcat.
+        // hasDict/dictSize lead the message (rather than trailing) since a
+        // long toast can get visually cut off on some devices/screen sizes.
         Toast.makeText(this,
-                "diag: predOn=" + isPredictionOn()
+                "diag: hasDict=" + (mSuggest != null && mSuggest.hasMainDictionary())
+                        + " dictSize=" + (mSuggest != null ? mSuggest.getMainDictionarySize() : -1)
+                        + " predOn=" + isPredictionOn()
                         + " stripVisible=" + isCandidateStripVisible()
                         + " showSugg=" + mShowSuggestions
                         + " predOnForMode=" + mPredictionOnForMode
                         + " container=" + (mCandidateViewContainer != null)
                         + " containerVis=" + (mCandidateViewContainer != null
-                                ? mCandidateViewContainer.getVisibility() : -1)
-                        + " hasDict=" + (mSuggest != null && mSuggest.hasMainDictionary()),
+                                ? mCandidateViewContainer.getVisibility() : -1),
                 Toast.LENGTH_LONG).show();
 
         // If the dictionary is not big enough, don't auto correct
@@ -1523,52 +1526,36 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void onOptionKeyPressed() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // Input method selector is available as a button in the soft key area, so just launch
-            // HK settings directly. This also works around the alert dialog being clipped
-            // in Android O.
-            //
-            // BUG (found via real-device testing): this used to call
-            // startActivity() directly with no flags, which crashed with
-            // "Calling startActivity() from outside of an Activity context
-            // requires the FLAG_ACTIVITY_NEW_TASK flag". Reusing
-            // launchSettings() (which sets that flag) did NOT fix it,
-            // though -- it still crashed on every tap, while the exact same
-            // launchSettings() call reached via the long-press options menu
-            // worked fine. The difference is the call stack: onKey() here
-            // runs synchronously inside PointerTracker's touch-event
-            // handling for this very key press (see
-            // LatinKeyboardBaseView/PointerTracker), so launchSettings() ->
-            // handleClose() -> requestHideSelf(0) tears down the current
-            // input view while that touch dispatch is still unwinding.
-            // Going through the options dialog instead works because its
-            // "Settings" item click is a separate, later event on a
-            // different window, well after the key's touch event finished.
-            // Posting through the handler (same pattern already used by
-            // switchToKeyboardView() for the same class of problem) defers
-            // the close+launch until after this touch event is done.
-            mHandler.post(new Runnable() {
-                public void run() {
-                    launchSettings();
-                }
-            });
-        } else {
-            // Show an options menu with choices to change input method or open HK settings.
-            if (!isShowingOptionDialog()) {
-                 showOptionsMenu();
+        // Short tap on the gear key opens Emoji directly (per user request);
+        // long-press still opens the full options menu (Select input
+        // method / Settings / Emoji) via onOptionKeyLongPressed(), unchanged.
+        //
+        // This used to launch Settings directly here instead, which crashed
+        // on every tap: onKey() runs synchronously inside PointerTracker's
+        // touch-event handling for this very key press (see
+        // LatinKeyboardBaseView/PointerTracker), and launchSettings() ->
+        // handleClose() -> requestHideSelf(0) tears down the current input
+        // view while that touch dispatch is still unwinding. Showing the
+        // emoji picker is less drastic (it swaps the input view via
+        // setInputView() instead of hiding/closing the whole IME window),
+        // but to be safe it's deferred the same way -- through the handler,
+        // the same pattern already used by switchToKeyboardView() for this
+        // class of problem -- so it never runs inside that same touch
+        // dispatch either.
+        mHandler.post(new Runnable() {
+            public void run() {
+                showEmojiPicker();
             }
-        }
+        });
     }
 
     private void onOptionKeyLongPressed() {
         // Used to call showInputMethodPicker() directly, which meant
         // showOptionsMenu()'s dialog (Select input method / Settings /
-        // Emoji) was unreachable on any Android N+ device via the settings
-        // key: a short tap goes straight to Settings (see
-        // onOptionKeyPressed()) and long-press bypassed the menu entirely.
-        // Routing through the menu instead keeps "select input method" one
-        // tap away (it's still the first item) while making Emoji
-        // reachable too.
+        // Emoji) was unreachable via long-press. Routing through the menu
+        // instead keeps "select input method" one tap away (it's still the
+        // first item) while keeping Settings and Emoji reachable too, now
+        // that a short tap on the gear key goes straight to Emoji.
         if (!isShowingOptionDialog()) {
             showOptionsMenu();
         }

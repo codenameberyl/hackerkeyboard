@@ -146,6 +146,14 @@ public class Suggest implements Dictionary.WordCallback {
         return mMainDict.getSize() > LARGE_DICTIONARY_THRESHOLD;
     }
 
+    // Diagnostic accessor: the raw word count backing hasMainDictionary()'s
+    // threshold check, so a broken load (0 or a tiny placeholder-sized
+    // dictionary) can be told apart from "loaded fine, just below the large-
+    // dictionary threshold" without adb/logcat access.
+    public int getMainDictionarySize() {
+        return mMainDict == null ? -1 : mMainDict.getSize();
+    }
+
     public int getApproxMaxWordLength() {
         return APPROX_MAX_WORD_LENGTH;
     }
