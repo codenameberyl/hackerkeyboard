@@ -3718,7 +3718,12 @@ public class LatinIME extends InputMethodService implements
         }
         scroll.setVisibility(View.VISIBLE);
         empty.setVisibility(View.GONE);
-        LayoutInflater inflater = getLayoutInflater();
+        // Must inflate with the container's own (Theme.HackersKeyboard-wrapped) context,
+        // not the service's plain getLayoutInflater() -- clipboard_history_item.xml
+        // references Material3 attrs like ?attr/colorOnSurface that the IME service's
+        // own base theme doesn't define, which crashes here instead of just mis-coloring
+        // once there's at least one history entry to actually inflate a row for.
+        LayoutInflater inflater = LayoutInflater.from(container.getContext());
         for (final String entry : history) {
             TextView row = (TextView) inflater.inflate(
                     R.layout.clipboard_history_item, list, false);

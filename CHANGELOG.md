@@ -260,3 +260,25 @@ not yet fixed in this fork either.
   since it shares `Theme.HackersKeyboard`, so it's visually consistent
   with the new Home screen, but a full redesign into matching cards is
   a larger follow-up, not done here.
+
+## Post-release fixes
+
+- **Clipboard history: instant crash on opening it.** Confirmed on real
+  hardware. `populateClipboardHistoryList()` inflated each history row
+  (`clipboard_history_item.xml`, which references Material3-only attrs
+  like `?attr/colorOnSurface`) using the IME service's own plain
+  `getLayoutInflater()`. Unlike an Activity, `InputMethodService` isn't
+  themed via the manifest's `android:theme`, so its base context doesn't
+  define those attrs at all -- inflation threw immediately. An empty
+  clipboard history never hit this (an early return skips row inflation
+  entirely), which is why it wasn't caught before: it only crashed once
+  there was at least one entry to actually render, which real-world
+  phones almost always already have. Fixed by inflating each row with
+  `LayoutInflater.from(container.getContext())` instead -- the
+  container itself is already correctly inflated under a
+  `Theme.HackersKeyboard`-wrapped `ContextThemeWrapper`, so its
+  `getContext()` carries that theme through to its children. Added
+  `ClipboardHistoryViewTest` (instrumented) as a regression test, since
+  none of the existing instrumented tests exercised any LatinIME-hosted
+  custom view (emoji picker, clipboard history) at all -- only the
+  separate Activities (Main, Settings).
