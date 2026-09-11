@@ -973,6 +973,23 @@ public class LatinIME extends InputMethodService implements
         // "the strip renders but getSuggestions() returns nothing".
         mDiagSuggestionCountShown = false;
         final String diagHostPkg = attribute.packageName;
+        // TEMPORARY diagnostic round 4: round 3's WhatsApp-captured data
+        // came back with suggCount=0 while the exact same build gets real
+        // suggestions in this app's own Test field -- that's not a
+        // rendering/attachment problem (the strip *does* get a real height
+        // there), it points at WhatsApp's message field itself asking us
+        // not to predict. onStartInputView() already checks
+        // TYPE_TEXT_FLAG_NO_SUGGESTIONS and TYPE_TEXT_FLAG_AUTO_COMPLETE and
+        // turns prediction off when either is set (respecting what the app
+        // asked for) -- recording the raw flags here confirms whether
+        // that's actually what's happening in WhatsApp specifically.
+        boolean diagNoSugg = (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0;
+        boolean diagAutoComplete = (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0;
+        final String diagInputTypeMsg = "diag5: predOnForMode=" + mPredictionOnForMode
+                + " noSugg=" + diagNoSugg + " autoComplete=" + diagAutoComplete
+                + " inputType=0x" + Integer.toHexString(attribute.inputType);
+        Toast.makeText(this, diagInputTypeMsg, Toast.LENGTH_LONG).show();
+        saveDiagnostic(PREF_DIAG_INPUTTYPE, diagInputTypeMsg, diagHostPkg);
         mHandler.post(new Runnable() {
             public void run() {
                 boolean shown = mCandidateViewContainer != null && mCandidateViewContainer.isShown();
@@ -1003,6 +1020,7 @@ public class LatinIME extends InputMethodService implements
     // which app is in the foreground when the diagnostic actually happens.
     static final String PREF_DIAG_VIEW = "diag_view";
     static final String PREF_DIAG_SUGG = "diag_sugg";
+    static final String PREF_DIAG_INPUTTYPE = "diag_inputtype";
 
     private void saveDiagnostic(String key, String msg, String hostPkg) {
         String value = "[" + hostPkg + "] " + msg;

@@ -117,11 +117,13 @@ public class Main extends AppCompatActivity {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String view = prefs.getString(LatinIME.PREF_DIAG_VIEW, null);
         String sugg = prefs.getString(LatinIME.PREF_DIAG_SUGG, null);
+        String inputType = prefs.getString(LatinIME.PREF_DIAG_INPUTTYPE, null);
         TextView diag = (TextView) findViewById(R.id.main_diag);
-        if (TextUtils.isEmpty(view) && TextUtils.isEmpty(sugg)) {
+        if (TextUtils.isEmpty(view) && TextUtils.isEmpty(sugg) && TextUtils.isEmpty(inputType)) {
             diag.setVisibility(View.GONE);
         } else {
             StringBuilder sb = new StringBuilder("Last suggestions diagnostic:\n");
+            if (!TextUtils.isEmpty(inputType)) sb.append(inputType).append('\n');
             if (!TextUtils.isEmpty(view)) sb.append(view).append('\n');
             if (!TextUtils.isEmpty(sugg)) sb.append(sugg).append('\n');
             diag.setText(sb.toString());
