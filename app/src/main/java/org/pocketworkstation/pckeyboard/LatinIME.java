@@ -1295,6 +1295,22 @@ public class LatinIME extends InputMethodService implements
     	//Log.i(TAG, "OnEvaluateInputViewShown, parent=" + parent + " + " wanted=" + wanted);
     	return wanted;
     }
+
+    @Override
+    public void onWindowShown() {
+        super.onWindowShown();
+        // Late re-assertion of the candidates-view visibility. onStartInputView()
+        // already calls this (via setCandidatesViewShownInternal()), but that can
+        // run before the system has fully attached this IME's window -- unverified,
+        // but a real, distinct lifecycle point worth trying given everything else
+        // checked out (real computed suggestions, a genuinely attached container)
+        // and it still wasn't rendering. onWindowShown() fires strictly later, once
+        // the window is actually pushed to the active display. Re-asserting here is
+        // a no-op if the first call already got it right --
+        // setCandidatesViewShownInternal() only touches the container when its
+        // state doesn't already match.
+        setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
+    }
     
     @Override
     public void setCandidatesViewShown(boolean shown) {
