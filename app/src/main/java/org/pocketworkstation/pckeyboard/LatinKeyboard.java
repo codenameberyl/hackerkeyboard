@@ -68,6 +68,10 @@ public class LatinKeyboard extends Keyboard {
     private final int[] mSpaceKeyIndexArray;
     private int mSpaceDragStartX;
     private int mSpaceDragLastDiff;
+    // Cursor-drag-on-spacebar state (see updateCursorDrag()/pollCursorDragSteps()).
+    private int mCursorDragLastStepDiff;
+    private int mPendingCursorDragSteps;
+    private boolean mCursorDragActive;
     private Locale mLocale;
     private LanguageSwitcher mLanguageSwitcher;
     private final Resources mRes;
@@ -111,6 +115,8 @@ public class LatinKeyboard extends Keyboard {
     private static final float MINIMUM_SCALE_OF_LANGUAGE_NAME = 0.8f;
 
     private static int sSpacebarVerticalCorrection;
+    // Horizontal drag distance (px) on the spacebar needed for one cursor-move step.
+    private static int sSpacebarCursorDragStepPx;
 
     public LatinKeyboard(Context context, int xmlLayoutResId) {
         this(context, xmlLayoutResId, 0, 0);
@@ -143,6 +149,8 @@ public class LatinKeyboard extends Keyboard {
         setDefaultBounds(m123MicPreviewIcon);
         sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
                 R.dimen.spacebar_vertical_correction);
+        sSpacebarCursorDragStepPx = res.getDimensionPixelSize(
+                R.dimen.spacebar_cursor_drag_step);
         mIsAlphaKeyboard = xmlLayoutResId == R.xml.kbd_qwerty;
         mIsAlphaFullKeyboard = xmlLayoutResId == R.xml.kbd_full;
         mIsFnFullKeyboard = xmlLayoutResId == R.xml.kbd_full_fn || xmlLayoutResId == R.xml.kbd_compact_fn;
@@ -582,6 +590,41 @@ public class LatinKeyboard extends Keyboard {
         return mSpaceDragLastDiff > 0 ? 1 : -1;
     }
 
+    /**
+     * Converts horizontal spacebar drag distance into discrete cursor-move steps, so the
+     * caller (LatinKeyboardView) can send one DPAD_LEFT/RIGHT key event per step as the
+     * user's finger crosses each step boundary -- trackpad-style continuous cursor control.
+     */
+    private void updateCursorDrag(int diff) {
+        if (sSpacebarCursorDragStepPx <= 0) return;
+        while (diff - mCursorDragLastStepDiff >= sSpacebarCursorDragStepPx) {
+            mCursorDragLastStepDiff += sSpacebarCursorDragStepPx;
+            mPendingCursorDragSteps++;
+            mCursorDragActive = true;
+        }
+        while (diff - mCursorDragLastStepDiff <= -sSpacebarCursorDragStepPx) {
+            mCursorDragLastStepDiff -= sSpacebarCursorDragStepPx;
+            mPendingCursorDragSteps--;
+            mCursorDragActive = true;
+        }
+    }
+
+    /**
+     * Consumes and returns the cursor-move steps accumulated since the last call (positive
+     * = move right, negative = move left). LatinKeyboardView polls this after each touch
+     * event and dispatches the corresponding number of DPAD key presses.
+     */
+    int pollCursorDragSteps() {
+        int steps = mPendingCursorDragSteps;
+        mPendingCursorDragSteps = 0;
+        return steps;
+    }
+
+    /** Whether the current (or just-finished) spacebar touch performed a cursor drag. */
+    boolean wasCursorDragActive() {
+        return mCursorDragActive;
+    }
+
     public void setLanguageSwitcher(LanguageSwitcher switcher, boolean isAutoCompletion) {
         mLanguageSwitcher = switcher;
         Locale locale = mLanguageSwitcher.getLocaleCount() > 0
@@ -610,6 +653,9 @@ public class LatinKeyboard extends Keyboard {
     void keyReleased() {
         mCurrentlyInSpace = false;
         mSpaceDragLastDiff = 0;
+        mCursorDragLastStepDiff = 0;
+        mPendingCursorDragSteps = 0;
+        mCursorDragActive = false;
         mPrefLetter = 0;
         mPrefLetterX = 0;
         mPrefLetterY = 0;
@@ -639,10 +685,19 @@ public class LatinKeyboard extends Keyboard {
             if (code == KEYCODE_DELETE) x -= key.width / 6;
         } else if (code == LatinIME.ASCII_SPACE) {
             y += LatinKeyboard.sSpacebarVerticalCorrection;
-            if (mLanguageSwitcher.getLocaleCount() > 1) {
+            // Cursor-drag and drag-to-switch-language both lock the touch into the
+            // spacebar and repurpose horizontal drag distance, so they're mutually
+            // exclusive: when cursor-drag is enabled it takes over the gesture and
+            // language switching falls back to its other triggers (e.g. the language
+            // key). See updateCursorDrag() and getLanguageChangeDirection().
+            boolean cursorDragEnabled = LatinIME.sKeyboardSettings.spaceCursorDrag;
+            boolean languageSwitchEnabled = mLanguageSwitcher.getLocaleCount() > 1;
+            if (cursorDragEnabled || languageSwitchEnabled) {
                 if (mCurrentlyInSpace) {
                     int diff = x - mSpaceDragStartX;
-                    if (Math.abs(diff - mSpaceDragLastDiff) > 0) {
+                    if (cursorDragEnabled) {
+                        updateCursorDrag(diff);
+                    } else if (Math.abs(diff - mSpaceDragLastDiff) > 0) {
                         updateLocaleDrag(diff);
                     }
                     mSpaceDragLastDiff = diff;
@@ -652,7 +707,10 @@ public class LatinKeyboard extends Keyboard {
                     if (insideSpace) {
                         mCurrentlyInSpace = true;
                         mSpaceDragStartX = x;
-                        updateLocaleDrag(0);
+                        mCursorDragLastStepDiff = 0;
+                        if (!cursorDragEnabled) {
+                            updateLocaleDrag(0);
+                        }
                     }
                     return insideSpace;
                 }

@@ -347,6 +347,12 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
         }
 
         if (me.getAction() == MotionEvent.ACTION_UP) {
+            if (keyboard.wasCursorDragActive()) {
+                // The touch was consumed to drag the cursor; don't also insert a space.
+                me.setAction(MotionEvent.ACTION_CANCEL);
+                keyboard.keyReleased();
+                return super.onTouchEvent(me);
+            }
             int languageDirection = keyboard.getLanguageChangeDirection();
             if (languageDirection != 0) {
                 getOnKeyboardActionListener().onKey(
@@ -360,7 +366,7 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
 
         // If we don't have an extension keyboard, don't go any further.
         if (keyboard.getExtension() == null) {
-            return super.onTouchEvent(me);
+            return dispatchTouchAndCursorDrag(keyboard, me);
         }
         // If the motion event is above the keyboard and it's not an UP event coming
         // even before the first MOVE event into the extension area
@@ -414,10 +420,29 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
             super.onTouchEvent(down, true);
             down.recycle();
             // Send the actual event
-            return super.onTouchEvent(me);
+            return dispatchTouchAndCursorDrag(keyboard, me);
         } else {
-            return super.onTouchEvent(me);
+            return dispatchTouchAndCursorDrag(keyboard, me);
         }
+    }
+
+    /**
+     * Passes the event to the normal touch handling (which is what actually runs the
+     * spacebar hit-testing in LatinKeyboard#isInside, accumulating cursor-drag steps), then
+     * dispatches any resulting steps as real DPAD_LEFT/RIGHT key events so apps see genuine
+     * cursor movement. See LatinKeyboard#updateCursorDrag()/pollCursorDragSteps().
+     */
+    private boolean dispatchTouchAndCursorDrag(LatinKeyboard keyboard, MotionEvent me) {
+        boolean result = super.onTouchEvent(me);
+        int steps = keyboard.pollCursorDragSteps();
+        if (steps != 0) {
+            int code = steps > 0 ? KEYCODE_DPAD_RIGHT : KEYCODE_DPAD_LEFT;
+            OnKeyboardActionListener listener = getOnKeyboardActionListener();
+            for (int i = 0, n = Math.abs(steps); i < n; i++) {
+                listener.onKey(code, null, mLastX, mLastY);
+            }
+        }
+        return result;
     }
 
     private void setExtensionType(boolean isExtensionType) {

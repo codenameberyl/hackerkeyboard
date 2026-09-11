@@ -40,6 +40,9 @@ public final class GlobalKeyboardSettings {
     // Read by LatinKeyboardView
     public boolean showTouchPos = false;
     //
+    // Read by LatinKeyboard
+    public boolean spaceCursorDrag = true;
+    //
     // Read by LatinIME
     public String suggestedPunctuation = "!?,.";
     public int keyboardModePortrait = 0;
@@ -142,6 +145,12 @@ public final class GlobalKeyboardSettings {
         addBooleanPref("pref_touch_pos", new BooleanPref() {
             public void set(boolean val) { showTouchPos = val; }
             public boolean getDefault() { return false; }
+            public int getFlags() { return FLAG_PREF_NONE; }
+        });
+
+        addBooleanPref("pref_space_cursor_drag", new BooleanPref() {
+            public void set(boolean val) { spaceCursorDrag = val; }
+            public boolean getDefault() { return res.getBoolean(R.bool.default_space_cursor_drag); }
             public int getFlags() { return FLAG_PREF_NONE; }
         });
 

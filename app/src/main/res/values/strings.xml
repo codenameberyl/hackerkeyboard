@@ -336,6 +336,10 @@
     <string name="prefs_enable_recorrection">Touch to correct words</string>
     <!-- The summary for the preferences item for enabling to correct suggestions by touching words you have typed -->
     <string name="prefs_enable_recorrection_summary">Touch entered words to correct them</string>
+    <!-- Preferences item for enabling cursor movement by swiping the spacebar left/right -->
+    <string name="prefs_space_cursor_drag">Cursor control on spacebar</string>
+    <!-- The summary for the spacebar cursor-drag preference -->
+    <string name="prefs_space_cursor_drag_summary">Swipe left/right on the spacebar to move the cursor</string>
 
     <string name="pref_screen_feedback_title">Key feedback settings</string>
     <string name="pref_screen_feedback_title_summary">Configure key sound, vibrate, preview popup etc.</string>

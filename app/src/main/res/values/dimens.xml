@@ -31,6 +31,9 @@
     <dimen name="candidate_strip_height">42dip</dimen>
     <dimen name="candidate_strip_fading_edge_length">63dip</dimen>
     <dimen name="spacebar_vertical_correction">4dip</dimen>
+    <!-- Horizontal drag distance on the spacebar needed to move the cursor by one
+         character when "Cursor control on spacebar" is enabled. -->
+    <dimen name="spacebar_cursor_drag_step">8dip</dimen>
     <!-- If the screen height in landscape is larger than the below value, then the keyboard
          will not go into extract (fullscreen) mode. -->
     <dimen name="max_height_for_fullscreen">2.5in</dimen>

@@ -185,3 +185,35 @@ hardware, most substantially an Infinix device running Android 15/XOS.
 the right edge on Android 15 --
 [klausw/hackerskeyboard#957](https://github.com/klausw/hackerskeyboard/issues/957),
 not yet fixed in this fork either.
+
+## New features (post-modernization)
+
+- **Settings defaults tidy-up.** Reset the out-of-the-box defaults to match
+  how most people actually use a keyboard today: portrait/landscape height
+  30%/35% (was 35%/55%), Full 5-row layout in both orientations (was the
+  4-row "Gingerbread" layout in portrait), suggestions shown in landscape
+  too, auto-correct on, touch-to-correct-words on, and Ctrl-A working as
+  plain select-all (was disabled by default, requiring Ctrl-Alt-A).
+- **Gear key opens Emoji.** A short tap on the gear/settings key now opens
+  the emoji picker directly instead of the options menu; long-press still
+  opens the full menu (Select input method / Settings / Emoji).
+- **Emoji picker backspace button.** Added a delete/backspace button next
+  to the "ABC" button in the emoji picker, wired to the same
+  `handleBackspace()` the physical Delete key uses (so it un-composes
+  text / reverts auto-correct correctly, not a raw character delete).
+- **Cursor control on spacebar.** Swiping left/right on the spacebar now
+  moves the text cursor one character per ~8dp of drag, trackpad-style,
+  instead of typing spaces -- tapping the spacebar normally still inserts
+  a space. Implemented by reusing the existing "lock touch into the
+  spacebar and track horizontal drag" mechanism that this fork's
+  drag-to-switch-language gesture already relied on
+  (`LatinKeyboard#isInside()`), converting drag distance into real
+  `KEYCODE_DPAD_LEFT`/`KEYCODE_DPAD_RIGHT` key events (via the same
+  `sendSpecialKey()` path used for the hardware-keyboard-style arrow
+  keys) rather than manipulating the app's text selection directly, so it
+  works the same as a real arrow key in any app. On by default; toggle
+  with the new "Cursor control on spacebar" setting. Since both gestures
+  repurpose the same horizontal spacebar drag, enabling this supersedes
+  drag-to-switch-language for multi-locale setups -- switch input
+  languages from Settings -> International -> Input Languages instead, or
+  turn this setting off to restore the old drag-to-switch gesture.

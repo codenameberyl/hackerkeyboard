@@ -273,6 +273,14 @@
             />
 
     <CheckBoxPreference
+            android:key="pref_space_cursor_drag"
+            android:title="@string/prefs_space_cursor_drag"
+            android:summary="@string/prefs_space_cursor_drag_summary"
+            android:persistent="true"
+            android:defaultValue="@bool/default_space_cursor_drag"
+            />
+
+    <CheckBoxPreference
             android:key="fullscreen_override"
             android:title="@string/title_fullscreen_override"
             android:persistent="true" 
