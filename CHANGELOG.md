@@ -382,3 +382,17 @@ not yet fixed in this fork either.
   redundant title only existed on Home. Hidden via
   `getSupportActionBar().hide()` in `Main#onCreate()`, since the
   body's own header already covers that role.
+- **App display name for the stable release.** `english_ime_name` (the
+  launcher label / IME label / Home screen header, base English value)
+  is now "Hacker's Keyboard (by CodenameBeryl)", per request, distinct
+  from the plain "Hacker's Keyboard" it inherited from upstream.
+- **Added a stable GitHub Release pipeline**, separate from the existing
+  rolling debug prerelease. Pushing a `vX.Y.Z` tag now builds
+  `assembleRelease` and publishes a real (non-prerelease, non-draft)
+  GitHub Release once `build` + `instrumented-tests` are green on that
+  commit -- see `RELEASING.md`. No Play Store submission and no
+  dedicated production signing key are involved (explicitly out of
+  scope for now); the release APK is unsigned, and `RELEASING.md`
+  documents the one-command local signing step needed to install it.
+  `versionName` bumped to `v1.42.0` to reflect everything accumulated
+  in this changelog since upstream `v1.41.1`.
