@@ -436,9 +436,12 @@ not yet fixed in this fork either.
     `bg_keycap_inner.xml` "Esc" pill (dimmed-yellow border, monospace)
     centered inside it via a `FrameLayout` -- an actual keycap-in-socket
     look instead of a single flat box.
-  - Title 24sp -> 22sp with -0.01 letter-spacing; tagline recolored
-    from muted gray to full yellow; section labels' letter-spacing
-    0.1 -> 0.06 with a 12dp bottom margin (was 8dp).
+  - Title 24sp -> 20sp with -0.01 letter-spacing (sized down once more
+    from an initial 22sp, to comfortably fit the actual app name
+    "Hacker's Keyboard (by CodenameBeryl)" rather than the shorter name
+    in the reference mockup); tagline recolored from muted gray to full
+    yellow; section labels' letter-spacing 0.1 -> 0.06 with a 12dp
+    bottom margin (was 8dp).
   - Step-card badges 36dp -> 38dp with explicit 15sp text (previously
     unset/default size); the badge-to-text gap 12dp -> 16dp; step
     titles 16sp -> 17sp, descriptions 14sp -> 13.5sp.
