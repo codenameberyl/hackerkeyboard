@@ -2,8 +2,11 @@
 <!--
     Hosts androidx.emoji2's EmojiPickerView as an alternate IME input view,
     swapped in for the normal keyboard view via LatinIME.showEmojiPicker()/
-    hideEmojiPicker() (see the "Emoji" entry in the options menu). The
-    "ABC" button switches back to the regular keyboard.
+    hideEmojiPicker() (see the "Emoji" entry in the options menu).
+    panel_switcher_row.xml (included below) switches straight to the
+    keyboard, clipboard history, or the GIF/sticker picker without going
+    back to the keyboard first; its own "emoji" button is disabled here
+    since this panel already is Emoji (see LatinIME#getEmojiPickerContainer()).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -17,13 +20,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-                android:id="@+id/emoji_picker_back"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|start"
-                android:text="@string/emoji_picker_back_to_keyboard" />
+        <include layout="@layout/panel_switcher_row" />
 
         <View
                 android:layout_width="0dp"

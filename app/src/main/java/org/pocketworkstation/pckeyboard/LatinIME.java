@@ -3660,8 +3660,19 @@ public class LatinIME extends InputMethodService implements
                     ic.commitText(item.getEmoji(), 1);
                 }
             });
-            MaterialButton backButton = mEmojiPickerContainer.findViewById(R.id.emoji_picker_back);
+            // panel_switcher_row.xml: jump straight to keyboard/clipboard/sticker
+            // from here instead of only being able to switch back to the keyboard
+            // first (see that layout's doc). The "emoji" button in the shared row
+            // is disabled -- this panel already is Emoji -- but left visible so
+            // the set of destinations stays consistent across all three panels.
+            MaterialButton backButton = mEmojiPickerContainer.findViewById(R.id.panel_switch_keyboard);
             backButton.setOnClickListener(v -> hideEmojiPicker());
+            MaterialButton emojiButton = mEmojiPickerContainer.findViewById(R.id.panel_switch_emoji);
+            emojiButton.setEnabled(false);
+            MaterialButton clipboardButton = mEmojiPickerContainer.findViewById(R.id.panel_switch_clipboard);
+            clipboardButton.setOnClickListener(v -> showClipboardHistory());
+            MaterialButton stickerButton = mEmojiPickerContainer.findViewById(R.id.panel_switch_sticker);
+            stickerButton.setOnClickListener(v -> launchStickerPicker());
             MaterialButton backspaceButton = mEmojiPickerContainer.findViewById(R.id.emoji_picker_backspace);
             // Same handling the physical Delete key uses (handleBackspace()),
             // not a raw deleteSurroundingText() call, so it still correctly
@@ -3690,9 +3701,23 @@ public class LatinIME extends InputMethodService implements
                     new ContextThemeWrapper(this, R.style.Theme_HackersKeyboard));
             mClipboardHistoryContainer = themedInflater.inflate(
                     R.layout.clipboard_history_container, null);
+            // panel_switcher_row.xml: jump straight to keyboard/emoji/sticker from
+            // here instead of only being able to switch back to the keyboard first
+            // (see that layout's doc). The "clipboard" button in the shared row is
+            // disabled -- this panel already is Clipboard -- but left visible so
+            // the set of destinations stays consistent across all three panels.
             MaterialButton backButton = mClipboardHistoryContainer.findViewById(
-                    R.id.clipboard_history_back);
+                    R.id.panel_switch_keyboard);
             backButton.setOnClickListener(v -> hideClipboardHistory());
+            MaterialButton emojiButton = mClipboardHistoryContainer.findViewById(
+                    R.id.panel_switch_emoji);
+            emojiButton.setOnClickListener(v -> showEmojiPicker());
+            MaterialButton clipboardButton = mClipboardHistoryContainer.findViewById(
+                    R.id.panel_switch_clipboard);
+            clipboardButton.setEnabled(false);
+            MaterialButton stickerButton = mClipboardHistoryContainer.findViewById(
+                    R.id.panel_switch_sticker);
+            stickerButton.setOnClickListener(v -> launchStickerPicker());
             MaterialButton clearButton = mClipboardHistoryContainer.findViewById(
                     R.id.clipboard_history_clear);
             clearButton.setOnClickListener(v -> {

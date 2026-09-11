@@ -396,3 +396,26 @@ not yet fixed in this fork either.
   documents the one-command local signing step needed to install it.
   `versionName` bumped to `v1.42.0` to reflect everything accumulated
   in this changelog since upstream `v1.41.1`.
+- **Cross-navigation between the Emoji, Clipboard and GIF/sticker panels.**
+  Previously, the emoji picker and clipboard history panels only offered
+  an "ABC" button back to the regular keyboard -- reaching the other
+  panel meant returning to the keyboard first, then long-pressing the
+  gear key again. Added a shared `panel_switcher_row.xml` (four icon
+  buttons: keyboard, emoji, clipboard, GIF/sticker), included at the top
+  of both `emoji_picker_container.xml` and
+  `clipboard_history_container.xml`; each panel disables (but still
+  shows) its own destination button so the set stays visually
+  consistent. The GIF/sticker button launches the existing
+  `StickerPickerActivity` trampoline directly, same as the options menu
+  already did. Plain Unicode glyphs are used as labels (no icon set
+  exists in this project for "keyboard"/"clipboard"/"picture", and a
+  keyboard app can always render its own emoji reliably).
+- **Home screen spacing/padding polish**, per a reference screenshot
+  (padding and rhythm only -- the existing black/yellow palette was
+  explicitly kept, not the reference's blue palette). Card internal
+  padding 16dp -> 20dp, card-to-card gaps 12dp -> 16dp (20dp -> 24dp
+  before the Settings button), the Settings button's gap before "TRY IT
+  OUT" 24dp -> 32dp, the header's bottom padding and the screen's top
+  padding both 24dp -> 28dp, and the test-field card's bottom margin
+  8dp -> 16dp -- an overall airier layout matching the reference's more
+  generous whitespace, all in `main.xml`.

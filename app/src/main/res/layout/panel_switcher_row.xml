@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Shared row of icon buttons for jumping directly between the keyboard's
+    alternate input panels (emoji picker, clipboard history) and the GIF/
+    sticker picker, instead of having to switch back to the regular keyboard
+    first. Included at the start of emoji_picker_container.xml's and
+    clipboard_history_container.xml's header row (see those files); each
+    including layout disables (but still shows, so the set of destinations
+    stays visually consistent) the button for its own panel: see
+    LatinIME#getEmojiPickerContainer()/getClipboardHistoryContainer(). IDs
+    are shared across both includes since only one panel's view tree is
+    inflated/attached to the IME at a time.
+
+    Plain Unicode glyphs are used as button labels rather than vector
+    drawables: this project has no existing icon set for "keyboard",
+    "clipboard" or "picture", and a keyboard app can always render its own
+    emoji glyphs reliably, unlike an arbitrary vector icon guessed by hand.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/panel_switch_keyboard"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="48dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:textSize="20sp"
+            android:text="⌨"
+            android:contentDescription="@string/switcher_keyboard" />
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/panel_switch_emoji"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="48dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:textSize="20sp"
+            android:text="😀"
+            android:contentDescription="@string/selectEmoji" />
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/panel_switch_clipboard"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="48dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:textSize="20sp"
+            android:text="📋"
+            android:contentDescription="@string/selectClipboard" />
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/panel_switch_sticker"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="48dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:textSize="20sp"
+            android:text="🖼"
+            android:contentDescription="@string/selectSticker" />
+
+</LinearLayout>

@@ -3,8 +3,11 @@
     Shows a scrollable list of recently copied/cut text as an alternate IME input view,
     swapped in for the normal keyboard view via LatinIME.showClipboardHistory()/
     hideClipboardHistory() (see the "Clipboard" entry in the options menu). Tapping an
-    entry pastes it and returns to the keyboard; the "ABC" button returns to the keyboard
-    without pasting anything, and "Clear" wipes the whole history.
+    entry pastes it and returns to the keyboard; "Clear" wipes the whole history.
+    panel_switcher_row.xml (included below) switches straight to the keyboard,
+    emoji picker, or the GIF/sticker picker without going back to the keyboard
+    first; its own "clipboard" button is disabled here since this panel already
+    is Clipboard (see LatinIME#getClipboardHistoryContainer()).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
@@ -17,13 +20,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-                android:id="@+id/clipboard_history_back"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|start"
-                android:text="@string/clipboard_history_back_to_keyboard" />
+        <include layout="@layout/panel_switcher_row" />
 
         <View
                 android:layout_width="0dp"

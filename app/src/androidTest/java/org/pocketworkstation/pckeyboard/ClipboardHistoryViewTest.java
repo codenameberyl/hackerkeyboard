@@ -42,10 +42,16 @@ public class ClipboardHistoryViewTest {
         View container = themedInflater.inflate(R.layout.clipboard_history_container, null);
         assertNotNull(container);
 
-        MaterialButton backButton = container.findViewById(R.id.clipboard_history_back);
+        MaterialButton backButton = container.findViewById(R.id.panel_switch_keyboard);
+        MaterialButton emojiButton = container.findViewById(R.id.panel_switch_emoji);
+        MaterialButton clipboardButton = container.findViewById(R.id.panel_switch_clipboard);
+        MaterialButton stickerButton = container.findViewById(R.id.panel_switch_sticker);
         MaterialButton clearButton = container.findViewById(R.id.clipboard_history_clear);
         LinearLayout list = container.findViewById(R.id.clipboard_history_list);
         assertNotNull(backButton);
+        assertNotNull(emojiButton);
+        assertNotNull(clipboardButton);
+        assertNotNull(stickerButton);
         assertNotNull(clearButton);
         assertNotNull(list);
 
