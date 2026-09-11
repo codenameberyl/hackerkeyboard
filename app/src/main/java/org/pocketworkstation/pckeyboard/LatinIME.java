@@ -163,6 +163,9 @@ public class LatinIME extends InputMethodService implements
 
     // private LatinKeyboardView mInputView;
     private LinearLayout mCandidateViewContainer;
+    // Wraps mCandidateViewContainer + the keyboard view; see
+    // getMainInputViewContainer().
+    private LinearLayout mInputViewContainer;
     // TEMPORARY diagnostic round 2 one-shot guard -- see onStartInputView()
     // and setSuggestions().
     private boolean mDiagSuggestionCountShown = true;
@@ -753,7 +756,7 @@ public class LatinIME extends InputMethodService implements
         mKeyboardSwitcher.makeKeyboards(true);
         mKeyboardSwitcher.setKeyboardMode(KeyboardSwitcher.MODE_TEXT, 0,
                 shouldShowVoiceButton(getCurrentInputEditorInfo()));
-        return mKeyboardSwitcher.getInputView();
+        return getMainInputViewContainer();
     }
 
     @Override
@@ -773,10 +776,12 @@ public class LatinIME extends InputMethodService implements
     	}
     }
     
-    @Override
-    public View onCreateCandidatesView() {
-        //Log.i(TAG, "onCreateCandidatesView(), mCandidateViewContainer=" + mCandidateViewContainer);
-        //mKeyboardSwitcher.makeKeyboards(true);
+    // Lazily builds the candidate strip (same candidates.xml as before), but
+    // no longer hands it to the framework via setCandidatesView() -- see
+    // getMainInputViewContainer() and setCandidatesViewShownInternal()'s
+    // comment for why. Starts GONE; setCandidatesViewShownInternal() is what
+    // actually shows it.
+    private LinearLayout ensureCandidateViewContainer() {
         if (mCandidateViewContainer == null) {
             mCandidateViewContainer = (LinearLayout) getLayoutInflater().inflate(
                     R.layout.candidates, null);
@@ -784,9 +789,52 @@ public class LatinIME extends InputMethodService implements
             .findViewById(R.id.candidates);
             mCandidateView.setPadding(0, 0, 0, 0);
             mCandidateView.setService(this);
-            setCandidatesView(mCandidateViewContainer);
+            mCandidateViewContainer.setVisibility(View.GONE);
         }
         return mCandidateViewContainer;
+    }
+
+    // Builds (or rebuilds, after the keyboard view itself was swapped, e.g.
+    // recreateInputView()) the view actually returned from
+    // onCreateInputView(): the candidate strip stacked above the keyboard,
+    // both as ordinary children of one LinearLayout. Re-parents either child
+    // if it's still attached elsewhere first (Android throws if a view
+    // already has a parent when added to a new one) -- notably the
+    // candidates container, which setCandidatesViewShownInternal() may have
+    // left attached from a previous call.
+    private View getMainInputViewContainer() {
+        LatinKeyboardView keyboardView = mKeyboardSwitcher.getInputView();
+        if (keyboardView == null) {
+            return null;
+        }
+        View candidates = ensureCandidateViewContainer();
+        ViewParent candidatesParent = candidates.getParent();
+        if (candidatesParent instanceof ViewGroup && candidatesParent != mInputViewContainer) {
+            ((ViewGroup) candidatesParent).removeView(candidates);
+        }
+        ViewParent keyboardParent = keyboardView.getParent();
+        if (keyboardParent instanceof ViewGroup && keyboardParent != mInputViewContainer) {
+            ((ViewGroup) keyboardParent).removeView(keyboardView);
+        }
+        if (mInputViewContainer == null) {
+            mInputViewContainer = new LinearLayout(this);
+            mInputViewContainer.setOrientation(LinearLayout.VERTICAL);
+        } else {
+            mInputViewContainer.removeAllViews();
+            // Defensive: on some reconfigure paths the old window's decor
+            // may not have detached this exact instance yet (the original
+            // reason for onCreateInputView()'s "Workaround for already has
+            // a parent" call) -- make sure it's ours to hand back either way.
+            ViewParent selfParent = mInputViewContainer.getParent();
+            if (selfParent instanceof ViewGroup) {
+                ((ViewGroup) selfParent).removeView(mInputViewContainer);
+            }
+        }
+        mInputViewContainer.addView(candidates, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        mInputViewContainer.addView(keyboardView, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        return mInputViewContainer;
     }
 
     private void removeCandidateViewContainer() {
@@ -1248,43 +1296,43 @@ public class LatinIME extends InputMethodService implements
         //
         // BUG (matches klausw/hackerskeyboard#964, and independently
         // rediscovered/fixed by a modder's 2023 blog writeup of this exact
-        // codebase): this used to additionally require
-        // mKeyboardSwitcher.getInputView().isShown() before calling
-        // super.setCandidatesViewShown() -- isShown() reflects whether the
-        // *keyboard* view is attached+visible at the exact moment this
-        // method runs, and on modern Android (13+) the input view and
-        // candidates view can be brought up in a different order/timing
-        // than this 2011-era check assumed. When it evaluated false, the
-        // candidates frame still reserved its layout space (a blank/empty
-        // strip) but the actual CandidateView content was never attached --
-        // exactly the "bar shows, no words" symptom. Trusting the caller's
-        // `shown` directly for the system-level toggle, the same way the
-        // fix that worked for that blog's author did ("it only worked once
-        // I ... had it call the super class's methods"), fixes it.
+        // codebase): this used to go through InputMethodService's own
+        // separate "candidates frame" mechanism -- setCandidatesView() to
+        // register our view with it, then super.setCandidatesViewShown() to
+        // toggle it. That got as far as an attached view with a real,
+        // correctly-populated CandidateView (confirmed on real hardware:
+        // width/height, getWindowToken() != null, and real computed
+        // suggestions all checked out), but the *frame itself* never
+        // actually became visible -- isShown() stayed false and no content
+        // was ever drawn, on real Android 13+/15 hardware. That's the
+        // framework's own internal container failing to show, which is
+        // outside what any caller-side gating logic (this method's history
+        // of increasingly narrow isShown()/attachment checks) can fix.
+        //
+        // getMainInputViewContainer() now embeds the candidate strip
+        // directly as an ordinary child of the same view onCreateInputView()
+        // returns for the keyboard -- the one view guaranteed to actually
+        // render, since the keyboard itself always shows correctly. So
+        // showing/hiding it here is now just an ordinary View.setVisibility()
+        // on a child in our own hierarchy, nothing more.
         boolean visible = shown
         && onEvaluateInputViewShown()
         && mKeyboardSwitcher.getInputView() != null
         && isPredictionOn();
+        View container = ensureCandidateViewContainer();
+        if (container == null) {
+            return;
+        }
         if (visible) {
-            if (mCandidateViewContainer == null) {
-                onCreateCandidatesView();
+            if (container.getVisibility() != View.VISIBLE) {
+                container.setVisibility(View.VISIBLE);
                 setNextSuggestions();
             }
         } else {
-            if (mCandidateViewContainer != null) {
-                removeCandidateViewContainer();
+            if (container.getVisibility() == View.VISIBLE) {
+                container.setVisibility(View.GONE);
                 commitTyped(getCurrentInputConnection(), true);
             }
-        }
-        super.setCandidatesViewShown(visible);
-    }
-
-    @Override
-    public void onFinishCandidatesView(boolean finishingInput) {
-        //Log.i(TAG, "onFinishCandidatesView(), mCandidateViewContainer=" + mCandidateViewContainer);
-        super.onFinishCandidatesView(finishingInput);
-        if (mCandidateViewContainer != null) {
-            removeCandidateViewContainer();
         }
     }
 
@@ -2616,13 +2664,9 @@ public class LatinIME extends InputMethodService implements
     private void switchToKeyboardView() {
         mHandler.post(new Runnable() {
             public void run() {
-                LatinKeyboardView view = mKeyboardSwitcher.getInputView(); 
+                LatinKeyboardView view = mKeyboardSwitcher.getInputView();
                 if (view != null) {
-                    ViewParent p = view.getParent();
-                    if (p != null && p instanceof ViewGroup) {
-                        ((ViewGroup) p).removeView(view);
-                    }
-                    setInputView(mKeyboardSwitcher.getInputView());
+                    setInputView(getMainInputViewContainer());
                 }
                 setCandidatesViewShown(true);
                 updateInputViewShown();
@@ -3657,7 +3701,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void hideEmojiPicker() {
-        setInputView(mKeyboardSwitcher.getInputView());
+        setInputView(getMainInputViewContainer());
         setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
     }
 
