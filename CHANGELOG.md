@@ -319,3 +319,28 @@ not yet fixed in this fork either.
   file (which isn't itself a row) is deliberately excluded. Added
   `PrefScreensSmokeTest` (instrumented) covering the four screens that
   had no test coverage before this (only `LatinIMESettings` did).
+- **Settings screens: title bar/first row overlapping the status bar.**
+  Reported with screenshots on real hardware: the settings screens'
+  title bar and top content were drawing underneath the status bar
+  (clock/battery), with no padding, on top of possibly losing the
+  title bar entirely. `Theme.HackersKeyboard` had picked up
+  `android:statusBarColor`/`android:navigationBarColor`/
+  `android:windowLightStatusBar` alongside the black+yellow palette;
+  these are exactly the kind of attribute that signals to the platform
+  "the app is managing its own system bars," and the legacy
+  `android.preference.PreferenceActivity` screens this app still uses
+  for Settings/Input Languages/Pref* aren't insets-aware code -- unlike
+  the modern `AppCompatActivity`-based Home screen, they never actually
+  handle the resulting `WindowInsets` to pad their own content, so
+  removing that padding-managed-for-you assumption left content drawn
+  straight under the status bar. Removed those three attributes and
+  added `android:fitsSystemWindows="true"` instead -- the classic,
+  well-established way to tell the system to keep padding this app's
+  content for the status/nav bars automatically, regardless of the
+  underlying cause. This is a purely visual bug no automated test can
+  catch (CI only proves screens launch without crashing, not that they
+  look right), so it's a best-effort fix pending the user's
+  confirmation on their device.
+- **Added the naira sign (₦) as the first suggested punctuation**, per
+  request -- `suggested_punctuations`/`suggested_punctuations_default`
+  in `donottranslate.xml`.

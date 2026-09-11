@@ -24,8 +24,13 @@
         <item name="colorOutline">@color/md_theme_outline</item>
         <item name="android:colorBackground">@color/md_theme_background</item>
         <item name="android:windowBackground">@color/md_theme_background</item>
-        <item name="android:statusBarColor">@color/md_theme_background</item>
-        <item name="android:navigationBarColor">@color/md_theme_background</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <!-- The legacy android.preference.PreferenceActivity screens (LatinIMESettings
+             and friends) aren't insets-aware code; without this, their content can end
+             up drawn underneath the status bar (title bar and the first row/category
+             overlapping the clock/battery) on some Android versions/OEM skins despite
+             the manifest's windowOptOutEdgeToEdgeEnforcement. This restores the
+             classic, well-established "let the system pad my content for the status/
+             nav bars automatically" behavior. -->
+        <item name="android:fitsSystemWindows">true</item>
     </style>
 </resources>
