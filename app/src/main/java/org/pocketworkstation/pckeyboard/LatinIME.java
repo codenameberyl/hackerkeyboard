@@ -3646,6 +3646,12 @@ public class LatinIME extends InputMethodService implements
             });
             MaterialButton backButton = mEmojiPickerContainer.findViewById(R.id.emoji_picker_back);
             backButton.setOnClickListener(v -> hideEmojiPicker());
+            MaterialButton backspaceButton = mEmojiPickerContainer.findViewById(R.id.emoji_picker_backspace);
+            // Same handling the physical Delete key uses (handleBackspace()),
+            // not a raw deleteSurroundingText() call, so it still correctly
+            // un-composes text/reverts auto-correct the way backspace
+            // normally does on the regular keyboard.
+            backspaceButton.setOnClickListener(v -> handleBackspace());
         }
         return mEmojiPickerContainer;
     }
