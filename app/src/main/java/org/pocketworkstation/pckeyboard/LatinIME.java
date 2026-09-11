@@ -990,16 +990,25 @@ public class LatinIME extends InputMethodService implements
                 + " inputType=0x" + Integer.toHexString(attribute.inputType);
         Toast.makeText(this, diagInputTypeMsg, Toast.LENGTH_LONG).show();
         saveDiagnostic(PREF_DIAG_INPUTTYPE, diagInputTypeMsg, diagHostPkg);
-        mHandler.post(new Runnable() {
+        // Delayed (not just posted) since isShown=false came back identically
+        // whether or not suggestions actually ended up working -- a single
+        // Handler.post() may still run before the system finishes attaching
+        // the candidates frame to the window after a fresh app switch.
+        // Added getWindowToken() != null as a second, more direct
+        // attachment signal alongside isShown().
+        mHandler.postDelayed(new Runnable() {
             public void run() {
                 boolean shown = mCandidateViewContainer != null && mCandidateViewContainer.isShown();
+                boolean attached = mCandidateViewContainer != null
+                        && mCandidateViewContainer.getWindowToken() != null;
                 int w = mCandidateViewContainer != null ? mCandidateViewContainer.getWidth() : -1;
                 int h = mCandidateViewContainer != null ? mCandidateViewContainer.getHeight() : -1;
-                String msg = "diag3: isShown=" + shown + " w=" + w + " h=" + h;
+                String msg = "diag3: isShown=" + shown + " attached=" + attached
+                        + " w=" + w + " h=" + h;
                 Toast.makeText(LatinIME.this, msg, Toast.LENGTH_LONG).show();
                 saveDiagnostic(PREF_DIAG_VIEW, msg, diagHostPkg);
             }
-        });
+        }, 300);
 
         // If the dictionary is not big enough, don't auto correct
         mHasDictionary = mSuggest.hasMainDictionary();
@@ -2640,25 +2649,27 @@ public class LatinIME extends InputMethodService implements
                     typedWordValid, haveMinimalSuggestion);
         }
 
-        // TEMPORARY diagnostic round 2/3, one-shot per input session (flag
-        // reset in onStartInputView): reports what the *first* real
-        // suggestion computation after focusing a field actually returned,
-        // to tell apart "the strip isn't being rendered at all" (see the
-        // isShown()/w/h diagnostic in onStartInputView) from "it renders,
-        // but getSuggestions() itself comes back empty for real typed text."
-        // Also persisted to SharedPreferences (see PREF_DIAG_VIEW's comment
-        // in onStartInputView) since the toast alone doesn't survive OEM
-        // background-popup restrictions in other apps.
+        // TEMPORARY diagnostic round 5: rounds 2-4 only captured the *first*
+        // setSuggestions() call per field focus, which is just the single
+        // typed letter's trivial self-suggestion (that's what "suggCount=1
+        // first=P" after typing one letter meant) -- not proof either way
+        // about real multi-letter dictionary suggestions once a whole word
+        // is typed. Persisting on *every* call instead (overwriting the
+        // same key) means by the time the user switches back to check, the
+        // diagnostic reflects the LAST suggestion list computed -- i.e. the
+        // one for the fully-typed word. The toast stays one-shot (per field
+        // focus) so it doesn't spam while typing in this app's own screen.
+        int count = suggestions != null ? suggestions.size() : 0;
+        String all = (suggestions == null || suggestions.isEmpty())
+                ? "none" : TextUtils.join(",", suggestions);
+        if (all.length() > 80) all = all.substring(0, 80) + "...";
+        String msg = "diag4: suggCount=" + count + " all=[" + all + "]";
         if (!mDiagSuggestionCountShown) {
             mDiagSuggestionCountShown = true;
-            int count = suggestions != null ? suggestions.size() : 0;
-            String first = (suggestions != null && !suggestions.isEmpty())
-                    ? String.valueOf(suggestions.get(0)) : "none";
-            String msg = "diag4: suggCount=" + count + " first=" + first;
             Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-            EditorInfo ei = getCurrentInputEditorInfo();
-            saveDiagnostic(PREF_DIAG_SUGG, msg, ei != null ? ei.packageName : "?");
         }
+        EditorInfo ei = getCurrentInputEditorInfo();
+        saveDiagnostic(PREF_DIAG_SUGG, msg, ei != null ? ei.packageName : "?");
     }
 
     private void updateSuggestions() {
