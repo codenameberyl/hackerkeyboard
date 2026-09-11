@@ -74,6 +74,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.FileDescriptor;
@@ -160,6 +161,7 @@ public class LatinIME extends InputMethodService implements
     private static final int POS_METHOD = 0;
     private static final int POS_SETTINGS = 1;
     private static final int POS_EMOJI = 2;
+    private static final int POS_CLIPBOARD = 3;
 
     // private LatinKeyboardView mInputView;
     private LinearLayout mCandidateViewContainer;
@@ -167,6 +169,8 @@ public class LatinIME extends InputMethodService implements
     // getMainInputViewContainer().
     private LinearLayout mInputViewContainer;
     private View mEmojiPickerContainer;
+    private View mClipboardHistoryContainer;
+    private ClipboardHistoryManager mClipboardHistoryManager;
     private CandidateView mCandidateView;
     private Suggest mSuggest;
     private CompletionInfo[] mCompletions;
@@ -455,6 +459,9 @@ public class LatinIME extends InputMethodService implements
                 ContextCompat.RECEIVER_NOT_EXPORTED);
         prefs.registerOnSharedPreferenceChangeListener(this);
         setNotification(mKeyboardNotification);
+
+        mClipboardHistoryManager = new ClipboardHistoryManager(this);
+        mClipboardHistoryManager.start();
     }
 
     private int getKeyboardModeNum(int origMode, int override) {
@@ -708,6 +715,9 @@ public class LatinIME extends InputMethodService implements
         if (mNotificationReceiver != null) {
         	unregisterReceiver(mNotificationReceiver);
             mNotificationReceiver = null;
+        }
+        if (mClipboardHistoryManager != null) {
+            mClipboardHistoryManager.stop();
         }
         super.onDestroy();
     }
@@ -3666,6 +3676,70 @@ public class LatinIME extends InputMethodService implements
         setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
     }
 
+    // Shown the same way as the emoji picker (see getEmojiPickerContainer() above):
+    // swapped in as the IME's input view rather than a new Keyboard mode.
+    private View getClipboardHistoryContainer() {
+        if (mClipboardHistoryContainer == null) {
+            LayoutInflater themedInflater = getLayoutInflater().cloneInContext(
+                    new ContextThemeWrapper(this, R.style.Theme_HackersKeyboard));
+            mClipboardHistoryContainer = themedInflater.inflate(
+                    R.layout.clipboard_history_container, null);
+            MaterialButton backButton = mClipboardHistoryContainer.findViewById(
+                    R.id.clipboard_history_back);
+            backButton.setOnClickListener(v -> hideClipboardHistory());
+            MaterialButton clearButton = mClipboardHistoryContainer.findViewById(
+                    R.id.clipboard_history_clear);
+            clearButton.setOnClickListener(v -> {
+                mClipboardHistoryManager.clear();
+                populateClipboardHistoryList();
+            });
+        }
+        return mClipboardHistoryContainer;
+    }
+
+    private void populateClipboardHistoryList() {
+        View container = mClipboardHistoryContainer;
+        if (container == null) return;
+        View scroll = container.findViewById(R.id.clipboard_history_scroll);
+        View empty = container.findViewById(R.id.clipboard_history_empty);
+        LinearLayout list = container.findViewById(R.id.clipboard_history_list);
+        list.removeAllViews();
+        List<String> history = mClipboardHistoryManager.getHistory();
+        if (history.isEmpty()) {
+            scroll.setVisibility(View.GONE);
+            empty.setVisibility(View.VISIBLE);
+            return;
+        }
+        scroll.setVisibility(View.VISIBLE);
+        empty.setVisibility(View.GONE);
+        LayoutInflater inflater = getLayoutInflater();
+        for (final String entry : history) {
+            TextView row = (TextView) inflater.inflate(
+                    R.layout.clipboard_history_item, list, false);
+            row.setText(entry);
+            row.setOnClickListener(v -> {
+                InputConnection ic = getCurrentInputConnection();
+                if (ic != null) {
+                    ic.commitText(entry, 1);
+                }
+                hideClipboardHistory();
+            });
+            list.addView(row);
+        }
+    }
+
+    private void showClipboardHistory() {
+        setCandidatesViewShown(false);
+        View container = getClipboardHistoryContainer();
+        populateClipboardHistoryList();
+        setInputView(container);
+    }
+
+    private void hideClipboardHistory() {
+        setInputView(getMainInputViewContainer());
+        setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
+    }
+
     private void showOptionsMenu() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -3674,7 +3748,9 @@ public class LatinIME extends InputMethodService implements
         CharSequence itemSettings = getString(R.string.english_ime_settings);
         CharSequence itemInputMethod = getString(R.string.selectInputMethod);
         CharSequence itemEmoji = getString(R.string.selectEmoji);
-        builder.setItems(new CharSequence[] { itemInputMethod, itemSettings, itemEmoji },
+        CharSequence itemClipboard = getString(R.string.selectClipboard);
+        builder.setItems(
+                new CharSequence[] { itemInputMethod, itemSettings, itemEmoji, itemClipboard },
                 new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface di, int position) {
@@ -3689,6 +3765,9 @@ public class LatinIME extends InputMethodService implements
                             break;
                         case POS_EMOJI:
                             showEmojiPicker();
+                            break;
+                        case POS_CLIPBOARD:
+                            showClipboardHistory();
                             break;
                         }
                     }

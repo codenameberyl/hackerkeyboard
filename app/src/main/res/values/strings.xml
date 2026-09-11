@@ -686,4 +686,8 @@
     <string name="emoji_picker_back_to_keyboard">ABC</string>
     <string name="emoji_picker_backspace">Delete</string>
     <string name="selectEmoji">Emoji</string>
+    <string name="selectClipboard">Clipboard</string>
+    <string name="clipboard_history_back_to_keyboard">ABC</string>
+    <string name="clipboard_history_clear">Clear</string>
+    <string name="clipboard_history_empty">No copied text yet</string>
 </resources>

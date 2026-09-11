@@ -217,3 +217,10 @@ not yet fixed in this fork either.
   drag-to-switch-language for multi-locale setups -- switch input
   languages from Settings -> International -> Input Languages instead, or
   turn this setting off to restore the old drag-to-switch gesture.
+- **Clipboard history.** The keyboard now tracks the last 20 pieces of text
+  copied or cut anywhere on the device (via
+  `ClipboardManager.OnPrimaryClipChangedListener`), persisted across
+  restarts. Accessible via the new "Clipboard" entry in the options menu
+  (long-press the gear key); tapping an entry pastes it and returns to the
+  keyboard. Shown the same way as the emoji picker -- swapped in as the
+  IME's input view rather than a new `Keyboard` mode.

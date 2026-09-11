@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Shows a scrollable list of recently copied/cut text as an alternate IME input view,
+    swapped in for the normal keyboard view via LatinIME.showClipboardHistory()/
+    hideClipboardHistory() (see the "Clipboard" entry in the options menu). Tapping an
+    entry pastes it and returns to the keyboard; the "ABC" button returns to the keyboard
+    without pasting anything, and "Clear" wipes the whole history.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        android:orientation="vertical">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/clipboard_history_back"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|start"
+                android:text="@string/clipboard_history_back_to_keyboard" />
+
+        <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/clipboard_history_clear"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|end"
+                android:text="@string/clipboard_history_clear" />
+
+    </LinearLayout>
+
+    <ScrollView
+            android:id="@+id/clipboard_history_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/emoji_picker_height">
+
+        <LinearLayout
+                android:id="@+id/clipboard_history_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+    </ScrollView>
+
+    <TextView
+            android:id="@+id/clipboard_history_empty"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/emoji_picker_height"
+            android:gravity="center"
+            android:text="@string/clipboard_history_empty"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+
+</LinearLayout>
