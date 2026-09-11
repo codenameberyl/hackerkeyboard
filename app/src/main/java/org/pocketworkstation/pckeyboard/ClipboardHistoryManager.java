@@ -52,9 +52,17 @@ class ClipboardHistoryManager implements ClipboardManager.OnPrimaryClipChangedLi
         load();
     }
 
-    /** Starts listening for clipboard changes. Call from LatinIME#onCreate(). */
+    /**
+     * Starts listening for clipboard changes, and also captures whatever is already on
+     * the clipboard right now. Without this second part, text copied before the
+     * keyboard was ever started (e.g. right after installing it, before it's been used
+     * as an IME at least once) would never show up: OnPrimaryClipChangedListener only
+     * fires for *future* changes, and there's no OS API to retrieve clipboard history
+     * from before it was registered. Call from LatinIME#onCreate().
+     */
     void start() {
         mClipboardManager.addPrimaryClipChangedListener(this);
+        addClip(mClipboardManager.getPrimaryClip());
     }
 
     /** Stops listening for clipboard changes. Call from LatinIME#onDestroy(). */
@@ -64,7 +72,10 @@ class ClipboardHistoryManager implements ClipboardManager.OnPrimaryClipChangedLi
 
     @Override
     public void onPrimaryClipChanged() {
-        ClipData clip = mClipboardManager.getPrimaryClip();
+        addClip(mClipboardManager.getPrimaryClip());
+    }
+
+    private void addClip(ClipData clip) {
         if (clip == null || clip.getItemCount() == 0) return;
         CharSequence text = clip.getItemAt(0).coerceToText(mContext);
         if (TextUtils.isEmpty(text)) return;
