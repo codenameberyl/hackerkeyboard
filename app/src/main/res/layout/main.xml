@@ -4,6 +4,11 @@
     choose input languages), a Settings shortcut, a "try it out" test field, and
     (further down) the detailed HTML help text this screen has always shown. See
     Main.java for the click handlers wired to the ids below.
+
+    Colors, type sizes and spacing here are matched to a reference mockup
+    supplied for this screen (an HTML/CSS spec provided directly), not
+    picked freely: keep new values consistent with it rather than
+    "close enough" if this file is touched again.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -19,7 +24,7 @@
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
             android:paddingTop="28dp"
-            android:paddingBottom="32dp">
+            android:paddingBottom="40dp">
 
         <!-- Header -->
         <LinearLayout
@@ -27,17 +32,31 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingBottom="28dp">
+                android:paddingBottom="32dp">
 
-            <TextView
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:background="@drawable/bg_keycap"
-                    android:gravity="center"
-                    android:text="@string/main_keycap_label"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+            <!-- Outer outline (bg_keycap) + inner "Esc" pill (bg_keycap_inner),
+                 echoing an actual keyboard key's raised-cap-within-a-socket look. -->
+            <FrameLayout
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/bg_keycap">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_keycap_inner"
+                        android:fontFamily="monospace"
+                        android:includeFontPadding="false"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:text="@string/main_keycap_label"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+            </FrameLayout>
 
             <LinearLayout
                     android:layout_width="0dp"
@@ -51,14 +70,16 @@
                         android:layout_height="wrap_content"
                         android:text="@string/english_ime_name"
                         android:textColor="@color/md_theme_onBackground"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="-0.01" />
 
                 <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="@string/main_tagline"
-                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="14sp" />
             </LinearLayout>
         </LinearLayout>
@@ -67,12 +88,12 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="12dp"
                 android:text="@string/main_section_setup"
                 android:textColor="?attr/colorPrimary"
-                android:textSize="13sp"
+                android:textSize="12.5sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.1" />
+                android:letterSpacing="0.06" />
 
         <!-- Step 1: enable keyboard -->
         <com.google.android.material.card.MaterialCardView
@@ -98,19 +119,20 @@
                         android:paddingBottom="16dp">
 
                     <TextView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
                             android:background="@drawable/bg_circle_badge"
                             android:gravity="center"
                             android:text="1"
                             android:textColor="?attr/colorOnPrimary"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
 
                     <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="16dp"
                             android:orientation="vertical">
 
                         <TextView
@@ -118,7 +140,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/main_setup_configure_imes"
                                 android:textColor="?attr/colorOnSurface"
-                                android:textSize="16sp"
+                                android:textSize="17sp"
                                 android:textStyle="bold" />
 
                         <TextView
@@ -126,7 +148,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/main_setup_configure_imes_desc"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="14sp" />
+                                android:textSize="13.5sp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -135,6 +157,10 @@
                         style="@style/Widget.Material3.Button"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:minHeight="50dp"
+                        android:textAllCaps="false"
+                        android:textSize="14.5sp"
+                        app:cornerRadius="12dp"
                         android:text="@string/main_setup_configure_imes" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -163,19 +189,20 @@
                         android:paddingBottom="16dp">
 
                     <TextView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
                             android:background="@drawable/bg_circle_badge"
                             android:gravity="center"
                             android:text="2"
                             android:textColor="?attr/colorOnPrimary"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
 
                     <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="16dp"
                             android:orientation="vertical">
 
                         <TextView
@@ -183,7 +210,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/main_setup_set_ime"
                                 android:textColor="?attr/colorOnSurface"
-                                android:textSize="16sp"
+                                android:textSize="17sp"
                                 android:textStyle="bold" />
 
                         <TextView
@@ -191,7 +218,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/main_setup_set_ime_desc"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="14sp" />
+                                android:textSize="13.5sp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -200,6 +227,10 @@
                         style="@style/Widget.Material3.Button"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:minHeight="50dp"
+                        android:textAllCaps="false"
+                        android:textSize="14.5sp"
+                        app:cornerRadius="12dp"
                         android:text="@string/main_setup_set_ime" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -228,19 +259,20 @@
                         android:paddingBottom="16dp">
 
                     <TextView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
                             android:background="@drawable/bg_circle_badge"
                             android:gravity="center"
                             android:text="3"
                             android:textColor="?attr/colorOnPrimary"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
 
                     <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="16dp"
                             android:orientation="vertical">
 
                         <TextView
@@ -248,7 +280,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/main_setup_input_lang"
                                 android:textColor="?attr/colorOnSurface"
-                                android:textSize="16sp"
+                                android:textSize="17sp"
                                 android:textStyle="bold" />
 
                         <TextView
@@ -256,7 +288,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/main_setup_input_lang_desc"
                                 android:textColor="?attr/colorOnSurfaceVariant"
-                                android:textSize="14sp" />
+                                android:textSize="13.5sp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -265,6 +297,10 @@
                         style="@style/Widget.Material3.Button"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:minHeight="50dp"
+                        android:textAllCaps="false"
+                        android:textSize="14.5sp"
+                        app:cornerRadius="12dp"
                         android:text="@string/main_setup_input_lang" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -275,19 +311,25 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="28dp"
+                android:minHeight="50dp"
+                android:textAllCaps="false"
+                android:textSize="14.5sp"
+                android:textColor="?attr/colorPrimary"
+                app:cornerRadius="12dp"
+                app:strokeColor="@color/md_theme_primary_dim"
                 android:text="@string/main_setup_settings" />
 
         <!-- TRY IT OUT -->
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="12dp"
                 android:text="@string/main_section_try"
                 android:textColor="?attr/colorPrimary"
-                android:textSize="13sp"
+                android:textSize="12.5sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.1" />
+                android:letterSpacing="0.06" />
 
         <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -303,10 +345,13 @@
                     android:id="@+id/main_setup_edit_test"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:gravity="center"
+                    android:layout_margin="16dp"
+                    android:background="@drawable/bg_test_input"
+                    android:gravity="center_vertical"
                     android:hint="@string/main_setup_test_hint"
-                    android:padding="20dp"
+                    android:minHeight="52dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
                     android:textColor="?attr/colorOnSurface"
                     android:textColorHint="?attr/colorOnSurfaceVariant" />
         </com.google.android.material.card.MaterialCardView>
@@ -317,17 +362,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="12dp"
+                android:textAllCaps="false"
                 android:text="@string/main_setup_get_dicts" />
 
         <TextView
                 android:id="@+id/main_version"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:layout_marginBottom="24dp"
                 android:gravity="center"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="12sp" />
+                android:textSize="12.5sp" />
 
         <TextView
                 android:id="@+id/main_description"

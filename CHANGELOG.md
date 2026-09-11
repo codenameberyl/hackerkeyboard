@@ -419,3 +419,41 @@ not yet fixed in this fork either.
   padding both 24dp -> 28dp, and the test-field card's bottom margin
   8dp -> 16dp -- an overall airier layout matching the reference's more
   generous whitespace, all in `main.xml`.
+- **Home screen rebuilt to an exact reference spec.** The prior pass
+  above was a rough visual match; this one implements a precise
+  HTML/CSS mockup supplied for the screen, value for value:
+  - Palette (`colors.xml`/`values-night/colors.xml`, so Settings screens
+    -- which already shared these tokens -- pick up the same refinement):
+    primary yellow `#FFD600` -> `#F5C400`, on-primary `#1A1A1A` ->
+    pure `#000000`, card surface `#1C1C1C` -> `#0D0D0D`, card outline
+    `#3A3A3A` -> `#262626`, primary/on-surface text unified to pure
+    white, secondary text `#B3B3B0` -> `#A8A8A8`. Added
+    `md_theme_primary_dim` (`#7A6200`, dimmed yellow) for outlined
+    borders the old palette had no token for.
+  - Header icon rebuilt as a nested outline: `bg_keycap.xml` is now a
+    60dp transparent box with a 1.5dp yellow border (was a filled,
+    bordered 56dp box with the "Esc" text directly on it), with a new
+    `bg_keycap_inner.xml` "Esc" pill (dimmed-yellow border, monospace)
+    centered inside it via a `FrameLayout` -- an actual keycap-in-socket
+    look instead of a single flat box.
+  - Title 24sp -> 22sp with -0.01 letter-spacing; tagline recolored
+    from muted gray to full yellow; section labels' letter-spacing
+    0.1 -> 0.06 with a 12dp bottom margin (was 8dp).
+  - Step-card badges 36dp -> 38dp with explicit 15sp text (previously
+    unset/default size); the badge-to-text gap 12dp -> 16dp; step
+    titles 16sp -> 17sp, descriptions 14sp -> 13.5sp.
+  - All four buttons (three filled + the outlined Settings shortcut)
+    now get explicit `minHeight="50dp"`, `cornerRadius="12dp"` and
+    `textAllCaps="false"` -- the reference renders "Enable keyboard",
+    not Material's default all-caps "ENABLE KEYBOARD" -- plus 14.5sp
+    text; the Settings button's stroke is explicitly the new
+    `md_theme_primary_dim` token rather than the (now much darker)
+    default `colorOutline`.
+  - The "try it out" field is now a bordered input (new
+    `bg_test_input.xml`: dimmed-yellow border, brightening to full
+    yellow via a focused-state selector, 10dp corner radius) nested
+    inside its card via a 16dp margin, replacing the old borderless
+    EditText that filled the whole card; left-aligned text/hint
+    (`center_vertical` gravity) instead of centered.
+  All IDs referenced from `Main.java` are unchanged; only the visual
+  tree and styling moved.
