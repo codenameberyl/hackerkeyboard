@@ -224,3 +224,16 @@ not yet fixed in this fork either.
   (long-press the gear key); tapping an entry pastes it and returns to the
   keyboard. Shown the same way as the emoji picker -- swapped in as the
   IME's input view rather than a new `Keyboard` mode.
+- **GIFs & Stickers.** A new "GIFs & Stickers" entry in the options menu
+  lets you pick an image (GIF/PNG/JPEG/WebP) from the device and send it
+  to whatever app you're typing into, via Android's rich-content API
+  (`InputConnectionCompat#commitContent()`), the same mechanism apps like
+  Gboard use. `InputMethodService` has no `startActivityForResult()` of
+  its own, so this uses a small invisible trampoline activity
+  (`StickerPickerActivity`) to run the system's image picker and hand the
+  result back; the picked file is copied into the app's own cache and
+  vended via a `FileProvider` (rather than forwarding the picker's own
+  URI directly, which isn't reliably supported across all
+  `DocumentsProvider` implementations and receiving apps). If the
+  currently-focused text field doesn't declare support for rich content,
+  a toast explains why nothing happened instead of silently failing.

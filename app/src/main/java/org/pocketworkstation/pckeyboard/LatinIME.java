@@ -28,6 +28,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ClipDescription;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -39,6 +40,7 @@ import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -51,6 +53,9 @@ import android.preference.PreferenceManager;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.inputmethod.EditorInfoCompat;
+import androidx.core.view.inputmethod.InputConnectionCompat;
+import androidx.core.view.inputmethod.InputContentInfoCompat;
 import androidx.emoji2.emojipicker.EmojiPickerView;
 import com.google.android.material.button.MaterialButton;
 import android.text.TextUtils;
@@ -162,6 +167,7 @@ public class LatinIME extends InputMethodService implements
     private static final int POS_SETTINGS = 1;
     private static final int POS_EMOJI = 2;
     private static final int POS_CLIPBOARD = 3;
+    private static final int POS_STICKER = 4;
 
     // private LatinKeyboardView mInputView;
     private LinearLayout mCandidateViewContainer;
@@ -3740,6 +3746,53 @@ public class LatinIME extends InputMethodService implements
         setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
     }
 
+    // GIFs/stickers: InputMethodService has no startActivityForResult() of its own, so
+    // picking a file requires a trampoline activity (StickerPickerActivity) that hands
+    // the result back here via the static onStickerPicked() callback -- see that
+    // class's doc for why it copies the picked content into our own cache dir first
+    // rather than forwarding the system picker's URI directly.
+    private void launchStickerPicker() {
+        Intent intent = new Intent(this, StickerPickerActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+
+    /** Called by StickerPickerActivity once the user has picked (or cancelled) an image. */
+    static void onStickerPicked(Uri contentUri, String mimeType) {
+        LatinIME ime = sInstance;
+        if (ime != null) {
+            ime.handleStickerPicked(contentUri, mimeType);
+        }
+    }
+
+    private void handleStickerPicked(Uri contentUri, String mimeType) {
+        if (contentUri == null || mimeType == null) return;
+        InputConnection ic = getCurrentInputConnection();
+        EditorInfo editorInfo = getCurrentInputEditorInfo();
+        if (ic == null || editorInfo == null) return;
+
+        String[] supportedTypes = EditorInfoCompat.getContentMimeTypes(editorInfo);
+        if (!isMimeTypeSupported(mimeType, supportedTypes)) {
+            Toast.makeText(this, R.string.sticker_not_supported, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        InputContentInfoCompat contentInfo = new InputContentInfoCompat(
+                contentUri,
+                new ClipDescription("Sticker", new String[] { mimeType }),
+                /* linkUri= */ null);
+        int flags = InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION;
+        InputConnectionCompat.commitContent(ic, editorInfo, contentInfo, flags, null);
+    }
+
+    private static boolean isMimeTypeSupported(String mimeType, String[] supportedTypes) {
+        if (supportedTypes == null) return false;
+        for (String supported : supportedTypes) {
+            if (ClipDescription.compareMimeTypes(mimeType, supported)) return true;
+        }
+        return false;
+    }
+
     private void showOptionsMenu() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -3749,8 +3802,10 @@ public class LatinIME extends InputMethodService implements
         CharSequence itemInputMethod = getString(R.string.selectInputMethod);
         CharSequence itemEmoji = getString(R.string.selectEmoji);
         CharSequence itemClipboard = getString(R.string.selectClipboard);
+        CharSequence itemSticker = getString(R.string.selectSticker);
         builder.setItems(
-                new CharSequence[] { itemInputMethod, itemSettings, itemEmoji, itemClipboard },
+                new CharSequence[] {
+                        itemInputMethod, itemSettings, itemEmoji, itemClipboard, itemSticker },
                 new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface di, int position) {
@@ -3768,6 +3823,9 @@ public class LatinIME extends InputMethodService implements
                             break;
                         case POS_CLIPBOARD:
                             showClipboardHistory();
+                            break;
+                        case POS_STICKER:
+                            launchStickerPicker();
                             break;
                         }
                     }

@@ -36,6 +36,27 @@
             android:theme="@style/Theme.HackersKeyboard"
             android:windowOptOutEdgeToEdgeEnforcement="true">
 
+        <!-- Vends content:// URIs for cache/stickers/ (picked GIFs/stickers, copied
+             there by StickerPickerActivity) to whatever app the user is typing into,
+             via InputConnectionCompat#commitContent(). See file_paths.xml. -->
+        <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+            <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Invisible trampoline for picking a GIF/sticker to send; see its
+             class doc. Not exported: only launched internally by LatinIME. -->
+
+        <activity android:name="StickerPickerActivity"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:excludeFromRecents="true"
+                android:exported="false" />
+
         <service android:name="LatinIME"
                 android:label="@string/english_ime_name"
                 android:permission="android.permission.BIND_INPUT_METHOD"

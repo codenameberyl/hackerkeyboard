@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Declares which of the app's directories the FileProvider (see AndroidManifest.xml
+     and StickerPickerActivity) is allowed to vend content:// URIs for. Only the
+     cache/stickers/ subdirectory used for picked GIFs/stickers is exposed. -->
+<paths>
+    <cache-path name="stickers" path="stickers/" />
+</paths>
