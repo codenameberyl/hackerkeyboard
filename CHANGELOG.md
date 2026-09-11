@@ -372,3 +372,13 @@ not yet fixed in this fork either.
   `versionNameSuffix` (already in `app/build.gradle`, shown on the
   Home screen's version line) remains as a less intrusive way to tell
   a debug build apart from a release one.
+- **Home screen still showing the app name twice.** After the debug
+  name leak was fixed, a follow-up screenshot showed the Home screen's
+  plain native ActionBar title (just above the redesigned card layout)
+  repeating the same app name already shown, styled, in `main.xml`'s
+  own header (keycap icon + name + tagline). `Main` is the only
+  `AppCompatActivity` in the app -- every other screen is a legacy
+  `PreferenceActivity` with no ActionBar of its own -- so this
+  redundant title only existed on Home. Hidden via
+  `getSupportActionBar().hide()` in `Main#onCreate()`, since the
+  body's own header already covers that role.

@@ -42,6 +42,13 @@ public class Main extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        // main.xml already renders its own styled header (keycap icon + app name +
+        // tagline) as part of the redesigned card layout, so the native ActionBar
+        // title above it -- which just repeats the same app name in plain text --
+        // is a redundant duplicate rather than useful chrome. Hide it.
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
         String html = getString(R.string.main_body);
         // Html.fromHtml(String) is deprecated since API 24; the single-arg
         // form is kept only as the pre-24 fallback.
