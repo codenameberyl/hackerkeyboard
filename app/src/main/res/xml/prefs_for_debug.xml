@@ -19,6 +19,7 @@
         android:key="english_ime_debug_settings">
 
     <CheckBoxPreference
+            android:layout="@layout/pref_item_row"
             android:key="enable_logging"
             android:title="@string/prefs_enable_log"
             android:summary="@string/prefs_description_log"
@@ -27,6 +28,7 @@
             />
 
     <ListPreference
+            android:layout="@layout/pref_item_row"
             android:key="pref_keyboard_layout_20100902"
             android:title="@string/keyboard_layout"
             android:persistent="true"
@@ -36,6 +38,7 @@
             />
 
     <CheckBoxPreference
+            android:layout="@layout/pref_item_row"
             android:key="debug_mode"
             android:title="@string/prefs_debug_mode"
             android:persistent="true"

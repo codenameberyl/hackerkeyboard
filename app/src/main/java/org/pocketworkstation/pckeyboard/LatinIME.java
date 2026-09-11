@@ -3589,7 +3589,7 @@ public class LatinIME extends InputMethodService implements
                 .getBoolean(R.bool.default_suggestions));
 
         final String voiceMode = sp.getString(PREF_VOICE_MODE,
-                getString(R.string.voice_mode_main));
+                getString(R.string.voice_mode_off));
         boolean enableVoice = !voiceMode
                 .equals(getString(R.string.voice_mode_off))
                 && mEnableVoiceButton;

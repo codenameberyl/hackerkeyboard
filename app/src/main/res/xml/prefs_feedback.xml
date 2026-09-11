@@ -20,12 +20,14 @@
         android:key="feedback_settings">
 
     <CheckBoxPreference
+            android:layout="@layout/pref_item_row"
             android:key="vibrate_on"
             android:title="@string/vibrate_on_keypress"
             android:persistent="true"
             />
 
-    <org.pocketworkstation.pckeyboard.VibratePreference		
+    <org.pocketworkstation.pckeyboard.VibratePreference
+            android:layout="@layout/pref_item_row"		
             android:defaultValue="40"
             hk:minValue="5"
             hk:maxValue="200"
@@ -37,12 +39,14 @@
             />
 
     <CheckBoxPreference
+            android:layout="@layout/pref_item_row"
             android:key="sound_on"
             android:title="@string/sound_on_keypress"
             android:persistent="true" 
             />
 
     <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+            android:layout="@layout/pref_item_row"
             android:key="pref_click_method"
             android:title="@string/title_click_method"
             android:entryValues="@array/click_method_values"
@@ -52,6 +56,7 @@
             />
     
     <org.pocketworkstation.pckeyboard.SeekBarPreferenceString
+            android:layout="@layout/pref_item_row"
             android:defaultValue="@string/default_click_volume"
             hk:minValue="0"
             hk:maxValue="1"
@@ -62,6 +67,7 @@
             />
 
     <CheckBoxPreference
+            android:layout="@layout/pref_item_row"
             android:key="popup_on"
             android:title="@string/popup_on_keypress"
             android:persistent="true"

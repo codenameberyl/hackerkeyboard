@@ -19,10 +19,12 @@
     android:title="@string/pref_screen_view_title" >
 
     <PreferenceCategory
+            android:layout="@layout/pref_category_header"
         android:key="graphics_settings"
         android:title="@string/pref_screen_view_title" >
 
         <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+            android:layout="@layout/pref_item_row"
             android:defaultValue="@string/default_hint_mode"
             android:entries="@array/hint_modes"
             android:entryValues="@array/hint_modes_values"
@@ -31,6 +33,7 @@
             android:title="@string/title_hint_mode" />
 
         <org.pocketworkstation.pckeyboard.SeekBarPreferenceString
+            android:layout="@layout/pref_item_row"
             android:defaultValue="1.0"
             hk:minValue="0.5"
             hk:maxValue="2.0"
@@ -41,6 +44,7 @@
             android:title="@string/title_label_scale" />
 
         <org.pocketworkstation.pckeyboard.SeekBarPreferenceString
+            android:layout="@layout/pref_item_row"
             android:defaultValue="1.0"
             hk:minValue="0.5"
             hk:maxValue="8.0"
@@ -51,6 +55,7 @@
             android:title="@string/title_candidate_scale" />
 
         <org.pocketworkstation.pckeyboard.SeekBarPreferenceString
+            android:layout="@layout/pref_item_row"
             android:defaultValue="1.0"
             hk:minValue="0.5"
             hk:maxValue="1.0"
@@ -61,6 +66,7 @@
             android:title="@string/title_top_row_scale" />
         
         <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+            android:layout="@layout/pref_item_row"
             android:defaultValue="0"
             android:entries="@array/keyboard_layout_modes"
             android:entryValues="@array/keyboard_layout_modes_values"
@@ -69,6 +75,7 @@
             android:title="@string/keyboard_layout" />
         
         <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+            android:layout="@layout/pref_item_row"
             android:defaultValue="@string/default_render_mode"
             android:entries="@array/render_mode_entries"
             android:entryValues="@array/render_mode_values"

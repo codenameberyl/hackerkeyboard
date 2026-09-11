@@ -282,3 +282,40 @@ not yet fixed in this fork either.
   none of the existing instrumented tests exercised any LatinIME-hosted
   custom view (emoji picker, clipboard history) at all -- only the
   separate Activities (Main, Settings).
+- **Clipboard history: didn't pick up text already on the clipboard.**
+  `ClipboardHistoryManager` only captured *future* clipboard changes via
+  `OnPrimaryClipChangedListener`; whatever was already on the clipboard
+  when the keyboard first started (e.g. copied before installing/
+  enabling it) was never added, since no "change" event fires for it.
+  `start()` now also reads and records the current primary clip once,
+  in addition to registering the listener.
+- **Voice input: off by default.** The "Voice input" `ListPreference`'s
+  XML default and `LatinIME`'s own in-code fallback (used before the
+  Settings screen has ever been opened, since nothing seeds XML
+  defaults into `SharedPreferences` otherwise) both pointed at
+  `voice_mode_symbols`/`voice_mode_main` respectively; both now default
+  to `voice_mode_off`.
+- **Settings screens: full redesign.** All five `PreferenceActivity`
+  screens (`LatinIMESettings`, `PrefScreenActions`, `PrefScreenFeedback`,
+  `PrefScreenView`, `InputLanguageSelection`) now render every
+  preference row and category header through two new custom layouts
+  (`pref_item_row.xml`, `pref_category_header.xml`) instead of the
+  system's default `Preference` look, applied via `android:layout=` on
+  every individual preference/category element across all five
+  `prefs*.xml`/`language_prefs.xml` files (not a theme-attribute
+  override, to avoid relying on the legacy `android.preference`
+  framework's undocumented style-inheritance chain for `ListPreference`/
+  `DialogPreference`-derived rows). Category headers get the same bold
+  yellow-accent section-label treatment as "SETUP"/"TRY IT OUT" on the
+  Home screen; rows get comfortable Material spacing, a two-line
+  title/summary layout, and the black+yellow color tokens already
+  applied to `Theme.HackersKeyboard`. Both new layouts keep the
+  framework's own view ids (`@android:id/title`, `@android:id/summary`,
+  `@android:id/widget_frame`) so `Preference`/`CheckBoxPreference`'s
+  normal binding code, and the actual checkbox widget
+  `CheckBoxPreference` auto-inflates into `widget_frame`, keep working
+  completely unchanged -- only the row's own visual styling/spacing
+  changes, not the binding logic. The root `<PreferenceScreen>` of each
+  file (which isn't itself a row) is deliberately excluded. Added
+  `PrefScreensSmokeTest` (instrumented) covering the four screens that
+  had no test coverage before this (only `LatinIMESettings` did).

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Modern row layout, applied via android:layout="@layout/pref_item_row" to every
+    non-category preference across prefs*.xml/language_prefs.xml, replacing the old
+    system Preference row look with one that matches the black+yellow Home screen
+    (see values/themes.xml). Keeps the framework's own view ids
+    (@android:id/title, @android:id/summary, @android:id/widget_frame) so the
+    framework's normal Preference/CheckBoxPreference binding code, which looks up
+    views by these exact ids, keeps working completely unchanged; only the visual
+    styling/spacing changes here, never the binding logic. widget_frame is left empty
+    (and so takes no visible space, being an empty wrap_content FrameLayout) for every
+    preference type except CheckBoxPreference, which the framework auto-inflates an
+    actual checkbox into here.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:minHeight="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+    <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+        <TextView
+                android:id="@android:id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp" />
+
+        <TextView
+                android:id="@android:id/summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp" />
+    </LinearLayout>
+
+    <FrameLayout
+            android:id="@android:id/widget_frame"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:gravity="center_vertical" />
+
+</LinearLayout>
