@@ -948,8 +948,7 @@ public class LatinIME extends InputMethodService implements
         updateShiftKeyState(attribute);
 
         mPredictionOnPref = (mCorrectionMode > 0 || mShowSuggestions);
-        setCandidatesViewShownInternal(isCandidateStripVisible()
-                || mCompletionOn, false /* needsInputViewShown */);
+        setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
         updateSuggestions();
 
         // TEMPORARY diagnostic round 3: round 2 showed the toast never
@@ -1211,22 +1210,34 @@ public class LatinIME extends InputMethodService implements
         }
     }
 
-    private void setCandidatesViewShownInternal(boolean shown,
-            boolean needsInputViewShown) {
-//        Log.i(TAG, "setCandidatesViewShownInternal(" + shown + ", " + needsInputViewShown +
+    private void setCandidatesViewShownInternal(boolean shown) {
+//        Log.i(TAG, "setCandidatesViewShownInternal(" + shown +
 //                " mCompletionOn=" + mCompletionOn +
 //                " mPredictionOnForMode=" + mPredictionOnForMode +
 //                " mPredictionOnPref=" + mPredictionOnPref +
 //                " mPredicting=" + mPredicting
 //                );
         // TODO: Remove this if we support candidates with hard keyboard
+        //
+        // BUG (matches klausw/hackerskeyboard#964, and independently
+        // rediscovered/fixed by a modder's 2023 blog writeup of this exact
+        // codebase): this used to additionally require
+        // mKeyboardSwitcher.getInputView().isShown() before calling
+        // super.setCandidatesViewShown() -- isShown() reflects whether the
+        // *keyboard* view is attached+visible at the exact moment this
+        // method runs, and on modern Android (13+) the input view and
+        // candidates view can be brought up in a different order/timing
+        // than this 2011-era check assumed. When it evaluated false, the
+        // candidates frame still reserved its layout space (a blank/empty
+        // strip) but the actual CandidateView content was never attached --
+        // exactly the "bar shows, no words" symptom. Trusting the caller's
+        // `shown` directly for the system-level toggle, the same way the
+        // fix that worked for that blog's author did ("it only worked once
+        // I ... had it call the super class's methods"), fixes it.
         boolean visible = shown
         && onEvaluateInputViewShown()
         && mKeyboardSwitcher.getInputView() != null
-        && isPredictionOn()
-        && (needsInputViewShown
-                ? mKeyboardSwitcher.getInputView().isShown()
-                        : true);
+        && isPredictionOn();
         if (visible) {
             if (mCandidateViewContainer == null) {
                 onCreateCandidatesView();
@@ -1260,7 +1271,7 @@ public class LatinIME extends InputMethodService implements
     
     @Override
     public void setCandidatesViewShown(boolean shown) {
-        setCandidatesViewShownInternal(shown, true /* needsInputViewShown */);
+        setCandidatesViewShownInternal(shown);
     }
 
     @Override
@@ -3618,8 +3629,7 @@ public class LatinIME extends InputMethodService implements
 
     private void hideEmojiPicker() {
         setInputView(mKeyboardSwitcher.getInputView());
-        setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn,
-                false /* needsInputViewShown */);
+        setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
     }
 
     private void showOptionsMenu() {
