@@ -756,7 +756,23 @@ public class LatinIME extends InputMethodService implements
         mKeyboardSwitcher.makeKeyboards(true);
         mKeyboardSwitcher.setKeyboardMode(KeyboardSwitcher.MODE_TEXT, 0,
                 shouldShowVoiceButton(getCurrentInputEditorInfo()));
-        return getMainInputViewContainer();
+        // Defensive fallback: getMainInputViewContainer() embeds the
+        // suggestion strip alongside the keyboard (see its own comment) --
+        // this crashed the keyboard outright once already from an edge case
+        // in a related code path (fixed -- see KeyboardSwitcher's posted
+        // Runnable), so if anything else unforeseen throws here, fall back
+        // to the bare keyboard view rather than take the whole IME down
+        // with it. No suggestion strip is a far smaller problem than a
+        // keyboard that won't open at all.
+        try {
+            View container = getMainInputViewContainer();
+            if (container != null) {
+                return container;
+            }
+        } catch (RuntimeException e) {
+            Log.e(TAG, "getMainInputViewContainer() failed, falling back to bare keyboard view", e);
+        }
+        return mKeyboardSwitcher.getInputView();
     }
 
     @Override
@@ -835,6 +851,27 @@ public class LatinIME extends InputMethodService implements
         mInputViewContainer.addView(keyboardView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         return mInputViewContainer;
+    }
+
+    // Package-private: called from KeyboardSwitcher when it needs to push a
+    // freshly (re)created keyboard view to the system outside the normal
+    // onCreateInputView() flow (theme/layout changes mid-session). Must go
+    // through the same wrapper onCreateInputView() uses -- see the crash this
+    // fixed, described where this is called from in KeyboardSwitcher.
+    void refreshInputView() {
+        try {
+            View container = getMainInputViewContainer();
+            if (container != null) {
+                setInputView(container);
+                return;
+            }
+        } catch (RuntimeException e) {
+            Log.e(TAG, "getMainInputViewContainer() failed in refreshInputView()", e);
+        }
+        LatinKeyboardView keyboardView = mKeyboardSwitcher.getInputView();
+        if (keyboardView != null) {
+            setInputView(keyboardView);
+        }
     }
 
     private void removeCandidateViewContainer() {

@@ -644,7 +644,19 @@ public class KeyboardSwitcher implements
         mInputMethodService.mHandler.post(new Runnable() {
             public void run() {
                 if (mInputView != null) {
-                    mInputMethodService.setInputView(mInputView);
+                    // BUG (root cause of a real crash-on-open, found by tracing
+                    // the actual exception path rather than guessing): this used
+                    // to call setInputView(mInputView) directly with the bare
+                    // keyboard view. LatinIME.onCreateInputView() wraps that same
+                    // mInputView inside its own container (getMainInputViewContainer(),
+                    // to embed the suggestion strip -- see its comment) and hands
+                    // *that* to the system. By the time this posted Runnable ran,
+                    // mInputView was already parented inside that wrapper, so handing
+                    // it to setInputView() again threw "The specified child already
+                    // has a parent" -- unconditionally, on every keyboard open, since
+                    // this path always runs as part of recreateInputView().
+                    // refreshInputView() goes through the same wrapper instead.
+                    mInputMethodService.refreshInputView();
                 }
                 mInputMethodService.updateInputViewShown();
             }
