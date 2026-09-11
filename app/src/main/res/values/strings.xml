@@ -634,12 +634,21 @@
     <!-- Title for Latin keyboard debug settings activity / dialog -->
     <string name="english_ime_debug_settings" translatable="false">Debug settings</string>
     <string name="prefs_debug_mode" translatable="false">Debug Mode</string>
+    <string name="main_keycap_label" translatable="false">Esc</string>
+    <string name="main_tagline">Power keyboard for developers</string>
+    <string name="main_version_format">Version %1$s</string>
+    <string name="main_section_setup">SETUP</string>
+    <string name="main_section_try">TRY IT OUT</string>
     <string name="main_setup_configure_imes">Enable keyboard</string>
+    <string name="main_setup_configure_imes_desc">Add to system input methods</string>
     <string name="main_setup_set_ime">Set input method</string>
+    <string name="main_setup_set_ime_desc">Select as your active keyboard</string>
     <string name="main_setup_get_dicts">More</string>
     <string name="main_setup_input_lang">Input languages</string>
+    <string name="main_setup_input_lang_desc">Choose keyboard layouts and languages</string>
     <string name="main_setup_settings">Settings</string>
     <string name="main_setup_test">Test</string>
+    <string name="main_setup_test_hint">Tap here to test the keyboard</string>
     <string name="main_body"><Data>
       <![CDATA["
         <h2>Enabling Hacker's Keyboard</h2>

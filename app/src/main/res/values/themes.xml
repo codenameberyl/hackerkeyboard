@@ -5,15 +5,27 @@
          by LatinKeyboardBaseView and skinned separately via the
          key*Material* colors below / the user's keyboard-theme preference.
 
-         Theme.Material3.DayNight automatically switches between this file
-         and values-night/themes.xml based on the system day/night setting;
-         on Android 12+, HackersKeyboardApplication additionally overlays
-         Material You dynamic (wallpaper-based) color on top of this static
-         fallback palette via DynamicColors. -->
+         A fixed black background + yellow accent brand palette, not a
+         light/dark-adaptive Material3 scheme: every color token below is
+         overridden explicitly, and values/colors.xml + values-night/colors.xml
+         intentionally define the same values, so the result looks identical
+         regardless of the system's day/night setting (or Material You
+         dynamic color, which HackersKeyboardApplication does not apply to
+         these Activities for the same reason). -->
     <style name="Theme.HackersKeyboard" parent="Theme.Material3.DayNight">
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
         <item name="colorSecondary">@color/md_theme_secondary</item>
         <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+        <item name="colorSurface">@color/md_theme_surface</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_outline</item>
+        <item name="android:colorBackground">@color/md_theme_background</item>
+        <item name="android:windowBackground">@color/md_theme_background</item>
+        <item name="android:statusBarColor">@color/md_theme_background</item>
+        <item name="android:navigationBarColor">@color/md_theme_background</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

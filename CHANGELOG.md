@@ -237,3 +237,26 @@ not yet fixed in this fork either.
   `DocumentsProvider` implementations and receiving apps). If the
   currently-focused text field doesn't declare support for rich content,
   a toast explains why nothing happened instead of silently failing.
+- **Black + yellow Home screen redesign.** Replaced the old plain
+  `TableLayout` of buttons with a card-based setup wizard (numbered
+  "Enable keyboard" / "Set input method" / "Input languages" steps, an
+  outlined Settings shortcut, and a bordered "try it out" test field),
+  and gave the app's chrome (`Theme.HackersKeyboard`, covering Home,
+  Settings, Input Languages and the Pref* screens) a deliberate fixed
+  black background + yellow accent brand palette -- overriding
+  `colorPrimary`/`colorSurface`/`colorOutline`/background tokens
+  explicitly in `values/colors.xml`, with `values-night/colors.xml`
+  intentionally defining the *same* colors so the look doesn't change
+  with system day/night mode. Material You dynamic (wallpaper-based)
+  color, previously applied to these screens on Android 12+, is removed
+  for the same reason -- it would override this deliberate choice. This
+  only covers the "chrome" Activities; the keyboard's own key-drawing
+  skin is unaffected and remains separately customizable via "Theme and
+  label settings".
+
+  The Settings screen itself is still Android's `PreferenceActivity`
+  list rendering (not the card treatment from the Home screen mockup
+  this was based on) -- it inherits the same black+yellow color tokens
+  since it shares `Theme.HackersKeyboard`, so it's visually consistent
+  with the new Home screen, but a full redesign into matching cards is
+  a larger follow-up, not done here.

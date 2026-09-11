@@ -43,7 +43,6 @@ public class Main extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         String html = getString(R.string.main_body);
-        html += "<p><i>Version: " + getString(R.string.auto_version) + "</i></p>";
         // Html.fromHtml(String) is deprecated since API 24; the single-arg
         // form is kept only as the pre-24 fallback.
         Spanned content = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
@@ -53,6 +52,8 @@ public class Main extends AppCompatActivity {
         description.setMovementMethod(LinkMovementMethod.getInstance());
         description.setText(content, BufferType.SPANNABLE);
 
+        TextView version = (TextView) findViewById(R.id.main_version);
+        version.setText(getString(R.string.main_version_format, getString(R.string.auto_version)));
 
         final MaterialButton setup1 = (MaterialButton) findViewById(R.id.main_setup_btn_configure_imes);
         setup1.setOnClickListener(new View.OnClickListener() {
