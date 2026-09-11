@@ -952,26 +952,36 @@ public class LatinIME extends InputMethodService implements
                 || mCompletionOn, false /* needsInputViewShown */);
         updateSuggestions();
 
-        // TEMPORARY diagnostic round 2: the previous round confirmed
-        // hasDict/predOn/container/showSugg are all healthy, but those only
-        // check our own view's local "visible" flag, not whether the system
-        // actually laid it out on screen with a real size -- isShown()
-        // additionally requires every ancestor to be attached+visible, which
-        // a flag check alone can't catch. Posted (not run inline) so the
-        // layout pass from setCandidatesViewShownInternal() above has had a
-        // chance to run first. Also resets the one-shot flag consumed by
-        // setSuggestions() below, so the *next* keystroke's actual suggestion
-        // count gets reported too -- separates "the strip isn't rendered at
-        // all" from "the strip renders but getSuggestions() returns nothing".
+        // TEMPORARY diagnostic round 3: round 2 showed the toast never
+        // appears at all outside the app's own screen -- Toast (and likely
+        // Notification) from a background IME service is a known target for
+        // OEM "background pop-up" restrictions (very common on
+        // Transsion/Infinix's XOS and similar skins), so it only surfaced
+        // while our own Settings/Test screen happened to be the foreground
+        // app. Toasts stay here (harmless when they do show), but the real
+        // data now also gets written to SharedPreferences, which works
+        // regardless of what's in the foreground -- Main's Settings/Test
+        // screen reads it back on resume. Recording the host app's package
+        // name too, so a captured value on its own proves onStartInputView
+        // actually ran in WhatsApp/Claude/etc., not just that the toast
+        // failed to show.
+        //
+        // Posted (not run inline) so the layout pass from
+        // setCandidatesViewShownInternal() above has had a chance to run
+        // first. Also resets the one-shot flag consumed by setSuggestions()
+        // below, so the *next* keystroke's actual suggestion count gets
+        // captured too -- separates "the strip isn't rendered at all" from
+        // "the strip renders but getSuggestions() returns nothing".
         mDiagSuggestionCountShown = false;
+        final String diagHostPkg = attribute.packageName;
         mHandler.post(new Runnable() {
             public void run() {
                 boolean shown = mCandidateViewContainer != null && mCandidateViewContainer.isShown();
                 int w = mCandidateViewContainer != null ? mCandidateViewContainer.getWidth() : -1;
                 int h = mCandidateViewContainer != null ? mCandidateViewContainer.getHeight() : -1;
-                Toast.makeText(LatinIME.this,
-                        "diag3: isShown=" + shown + " w=" + w + " h=" + h,
-                        Toast.LENGTH_LONG).show();
+                String msg = "diag3: isShown=" + shown + " w=" + w + " h=" + h;
+                Toast.makeText(LatinIME.this, msg, Toast.LENGTH_LONG).show();
+                saveDiagnostic(PREF_DIAG_VIEW, msg, diagHostPkg);
             }
         });
 
@@ -985,6 +995,19 @@ public class LatinIME extends InputMethodService implements
         // If we just entered a text field, maybe it has some old text that
         // requires correction
         checkReCorrectionOnStart();
+    }
+
+    // TEMPORARY diagnostic round 3 storage: written from onStartInputView()
+    // and setSuggestions(), read back by Main's Settings/Test screen on
+    // resume (see its onResume()). Plain default SharedPreferences, not a
+    // user-facing Preference -- just a mailbox that survives regardless of
+    // which app is in the foreground when the diagnostic actually happens.
+    static final String PREF_DIAG_VIEW = "diag_view";
+    static final String PREF_DIAG_SUGG = "diag_sugg";
+
+    private void saveDiagnostic(String key, String msg, String hostPkg) {
+        String value = "[" + hostPkg + "] " + msg;
+        PreferenceManager.getDefaultSharedPreferences(this).edit().putString(key, value).apply();
     }
 
     private boolean shouldShowVoiceButton(EditorInfo attribute) {
@@ -2588,19 +2611,24 @@ public class LatinIME extends InputMethodService implements
                     typedWordValid, haveMinimalSuggestion);
         }
 
-        // TEMPORARY diagnostic round 2, one-shot per input session (flag
+        // TEMPORARY diagnostic round 2/3, one-shot per input session (flag
         // reset in onStartInputView): reports what the *first* real
         // suggestion computation after focusing a field actually returned,
         // to tell apart "the strip isn't being rendered at all" (see the
-        // isShown()/w/h toast in onStartInputView) from "it renders, but
-        // getSuggestions() itself comes back empty for real typed text."
+        // isShown()/w/h diagnostic in onStartInputView) from "it renders,
+        // but getSuggestions() itself comes back empty for real typed text."
+        // Also persisted to SharedPreferences (see PREF_DIAG_VIEW's comment
+        // in onStartInputView) since the toast alone doesn't survive OEM
+        // background-popup restrictions in other apps.
         if (!mDiagSuggestionCountShown) {
             mDiagSuggestionCountShown = true;
             int count = suggestions != null ? suggestions.size() : 0;
             String first = (suggestions != null && !suggestions.isEmpty())
                     ? String.valueOf(suggestions.get(0)) : "none";
-            Toast.makeText(this, "diag4: suggCount=" + count + " first=" + first,
-                    Toast.LENGTH_LONG).show();
+            String msg = "diag4: suggCount=" + count + " first=" + first;
+            Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+            EditorInfo ei = getCurrentInputEditorInfo();
+            saveDiagnostic(PREF_DIAG_SUGG, msg, ei != null ? ei.packageName : "?");
         }
     }
 
