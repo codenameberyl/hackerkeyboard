@@ -19,14 +19,11 @@ package org.pocketworkstation.pckeyboard;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.text.Html;
 import android.text.Spanned;
-import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -103,32 +100,6 @@ public class Main extends AppCompatActivity {
                 startActivityForResult(new Intent(that, LatinIMESettings.class), 0);
             }
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // TEMPORARY: surfaces the round-3 suggestions diagnostic LatinIME
-        // wrote to SharedPreferences (see its saveDiagnostic()) -- Toasts
-        // from a background IME service are silently dropped by some OEM
-        // "background pop-up" restrictions in other apps, so this is the
-        // reliable way to read back what happened while testing there:
-        // switch away, type a word, then switch back to this screen.
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String view = prefs.getString(LatinIME.PREF_DIAG_VIEW, null);
-        String sugg = prefs.getString(LatinIME.PREF_DIAG_SUGG, null);
-        String inputType = prefs.getString(LatinIME.PREF_DIAG_INPUTTYPE, null);
-        TextView diag = (TextView) findViewById(R.id.main_diag);
-        if (TextUtils.isEmpty(view) && TextUtils.isEmpty(sugg) && TextUtils.isEmpty(inputType)) {
-            diag.setVisibility(View.GONE);
-        } else {
-            StringBuilder sb = new StringBuilder("Last suggestions diagnostic:\n");
-            if (!TextUtils.isEmpty(inputType)) sb.append(inputType).append('\n');
-            if (!TextUtils.isEmpty(view)) sb.append(view).append('\n');
-            if (!TextUtils.isEmpty(sugg)) sb.append(sugg).append('\n');
-            diag.setText(sb.toString());
-            diag.setVisibility(View.VISIBLE);
-        }
     }
 }
 

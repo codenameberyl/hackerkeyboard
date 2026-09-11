@@ -46,15 +46,6 @@
 				android:layout_height="wrap_content" />
 		</TableRow>
 	</TableLayout>
-	<!-- TEMPORARY: shows the round-3 suggestions diagnostic captured by
-	     LatinIME while testing in *other* apps, where the diagnostic Toast
-	     itself may be silently blocked by OEM background-popup restrictions.
-	     Only visible when there's something to show (see Main.onResume()). -->
-	<TextView android:layout_height="wrap_content" android:id="@+id/main_diag"
-		android:layout_width="wrap_content"
-		android:layout_margin="8dip"
-		android:textIsSelectable="true"
-		android:visibility="gone" />
 	<TextView android:layout_height="wrap_content" android:id="@+id/main_description"
 		android:layout_width="wrap_content" />
 </LinearLayout>

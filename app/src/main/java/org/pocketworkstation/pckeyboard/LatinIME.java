@@ -166,9 +166,6 @@ public class LatinIME extends InputMethodService implements
     // Wraps mCandidateViewContainer + the keyboard view; see
     // getMainInputViewContainer().
     private LinearLayout mInputViewContainer;
-    // TEMPORARY diagnostic round 2 one-shot guard -- see onStartInputView()
-    // and setSuggestions().
-    private boolean mDiagSuggestionCountShown = true;
     private View mEmojiPickerContainer;
     private CandidateView mCandidateView;
     private Suggest mSuggest;
@@ -1036,65 +1033,6 @@ public class LatinIME extends InputMethodService implements
         setCandidatesViewShownInternal(isCandidateStripVisible() || mCompletionOn);
         updateSuggestions();
 
-        // TEMPORARY diagnostic round 3: round 2 showed the toast never
-        // appears at all outside the app's own screen -- Toast (and likely
-        // Notification) from a background IME service is a known target for
-        // OEM "background pop-up" restrictions (very common on
-        // Transsion/Infinix's XOS and similar skins), so it only surfaced
-        // while our own Settings/Test screen happened to be the foreground
-        // app. Toasts stay here (harmless when they do show), but the real
-        // data now also gets written to SharedPreferences, which works
-        // regardless of what's in the foreground -- Main's Settings/Test
-        // screen reads it back on resume. Recording the host app's package
-        // name too, so a captured value on its own proves onStartInputView
-        // actually ran in WhatsApp/Claude/etc., not just that the toast
-        // failed to show.
-        //
-        // Posted (not run inline) so the layout pass from
-        // setCandidatesViewShownInternal() above has had a chance to run
-        // first. Also resets the one-shot flag consumed by setSuggestions()
-        // below, so the *next* keystroke's actual suggestion count gets
-        // captured too -- separates "the strip isn't rendered at all" from
-        // "the strip renders but getSuggestions() returns nothing".
-        mDiagSuggestionCountShown = false;
-        final String diagHostPkg = attribute.packageName;
-        // TEMPORARY diagnostic round 4: round 3's WhatsApp-captured data
-        // came back with suggCount=0 while the exact same build gets real
-        // suggestions in this app's own Test field -- that's not a
-        // rendering/attachment problem (the strip *does* get a real height
-        // there), it points at WhatsApp's message field itself asking us
-        // not to predict. onStartInputView() already checks
-        // TYPE_TEXT_FLAG_NO_SUGGESTIONS and TYPE_TEXT_FLAG_AUTO_COMPLETE and
-        // turns prediction off when either is set (respecting what the app
-        // asked for) -- recording the raw flags here confirms whether
-        // that's actually what's happening in WhatsApp specifically.
-        boolean diagNoSugg = (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0;
-        boolean diagAutoComplete = (attribute.inputType & EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0;
-        final String diagInputTypeMsg = "diag5: predOnForMode=" + mPredictionOnForMode
-                + " noSugg=" + diagNoSugg + " autoComplete=" + diagAutoComplete
-                + " inputType=0x" + Integer.toHexString(attribute.inputType);
-        Toast.makeText(this, diagInputTypeMsg, Toast.LENGTH_LONG).show();
-        saveDiagnostic(PREF_DIAG_INPUTTYPE, diagInputTypeMsg, diagHostPkg);
-        // Delayed (not just posted) since isShown=false came back identically
-        // whether or not suggestions actually ended up working -- a single
-        // Handler.post() may still run before the system finishes attaching
-        // the candidates frame to the window after a fresh app switch.
-        // Added getWindowToken() != null as a second, more direct
-        // attachment signal alongside isShown().
-        mHandler.postDelayed(new Runnable() {
-            public void run() {
-                boolean shown = mCandidateViewContainer != null && mCandidateViewContainer.isShown();
-                boolean attached = mCandidateViewContainer != null
-                        && mCandidateViewContainer.getWindowToken() != null;
-                int w = mCandidateViewContainer != null ? mCandidateViewContainer.getWidth() : -1;
-                int h = mCandidateViewContainer != null ? mCandidateViewContainer.getHeight() : -1;
-                String msg = "diag3: isShown=" + shown + " attached=" + attached
-                        + " w=" + w + " h=" + h;
-                Toast.makeText(LatinIME.this, msg, Toast.LENGTH_LONG).show();
-                saveDiagnostic(PREF_DIAG_VIEW, msg, diagHostPkg);
-            }
-        }, 300);
-
         // If the dictionary is not big enough, don't auto correct
         mHasDictionary = mSuggest.hasMainDictionary();
 
@@ -1105,20 +1043,6 @@ public class LatinIME extends InputMethodService implements
         // If we just entered a text field, maybe it has some old text that
         // requires correction
         checkReCorrectionOnStart();
-    }
-
-    // TEMPORARY diagnostic round 3 storage: written from onStartInputView()
-    // and setSuggestions(), read back by Main's Settings/Test screen on
-    // resume (see its onResume()). Plain default SharedPreferences, not a
-    // user-facing Preference -- just a mailbox that survives regardless of
-    // which app is in the foreground when the diagnostic actually happens.
-    static final String PREF_DIAG_VIEW = "diag_view";
-    static final String PREF_DIAG_SUGG = "diag_sugg";
-    static final String PREF_DIAG_INPUTTYPE = "diag_inputtype";
-
-    private void saveDiagnostic(String key, String msg, String hostPkg) {
-        String value = "[" + hostPkg + "] " + msg;
-        PreferenceManager.getDefaultSharedPreferences(this).edit().putString(key, value).apply();
     }
 
     private boolean shouldShowVoiceButton(EditorInfo attribute) {
@@ -2745,28 +2669,6 @@ public class LatinIME extends InputMethodService implements
             mCandidateView.setSuggestions(suggestions, completions,
                     typedWordValid, haveMinimalSuggestion);
         }
-
-        // TEMPORARY diagnostic round 5: rounds 2-4 only captured the *first*
-        // setSuggestions() call per field focus, which is just the single
-        // typed letter's trivial self-suggestion (that's what "suggCount=1
-        // first=P" after typing one letter meant) -- not proof either way
-        // about real multi-letter dictionary suggestions once a whole word
-        // is typed. Persisting on *every* call instead (overwriting the
-        // same key) means by the time the user switches back to check, the
-        // diagnostic reflects the LAST suggestion list computed -- i.e. the
-        // one for the fully-typed word. The toast stays one-shot (per field
-        // focus) so it doesn't spam while typing in this app's own screen.
-        int count = suggestions != null ? suggestions.size() : 0;
-        String all = (suggestions == null || suggestions.isEmpty())
-                ? "none" : TextUtils.join(",", suggestions);
-        if (all.length() > 80) all = all.substring(0, 80) + "...";
-        String msg = "diag4: suggCount=" + count + " all=[" + all + "]";
-        if (!mDiagSuggestionCountShown) {
-            mDiagSuggestionCountShown = true;
-            Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-        }
-        EditorInfo ei = getCurrentInputEditorInfo();
-        saveDiagnostic(PREF_DIAG_SUGG, msg, ei != null ? ei.packageName : "?");
     }
 
     private void updateSuggestions() {

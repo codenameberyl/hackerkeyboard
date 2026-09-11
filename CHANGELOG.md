@@ -114,3 +114,74 @@ a `PreferenceFragmentCompat` rewrite.
   popup keys, the various keyboard skins) -- see the README's
   "Modernization notes" for what still needs manual verification before a
   release.
+
+## Real-device bug fixes (post-modernization)
+
+CI (build/lint/instrumented smoke tests) doesn't catch everything --
+these were found and fixed through live testing on real Android 13-15
+hardware, most substantially an Infinix device running Android 15/XOS.
+
+- **Settings-key crash.** Tapping the gear key crashed the app: it called
+  `startActivity()` with no flags from a `Service` context, which Android
+  requires `FLAG_ACTIVITY_NEW_TASK` for. Adding the flag alone didn't
+  fully fix it -- the crash persisted because the call still ran
+  synchronously inside `PointerTracker`'s touch-event dispatch for that
+  same key press, tearing down the input view mid-gesture. Per user
+  request, a short tap now opens the emoji picker directly instead of
+  Settings (long-press still reaches the full menu, Settings included),
+  deferred via the handler for the same reason.
+- **Emoji picker**, via `androidx.emoji2:emoji2-emojipicker`. Crashed on
+  first use: `MaterialButton`/`EmojiPickerView` read Material3 theme
+  attributes while inflating, and an `InputMethodService`'s own
+  `LayoutInflater` doesn't resolve those the way an Activity's manifest
+  theme does. Fixed by inflating through a `LayoutInflater` whose context
+  is wrapped in the app's own theme. Also had no background of its own
+  (rendered transparent over whatever was behind the keyboard window) --
+  given an explicit `?attr/colorSurface` background.
+- **Suggestions never appearing, root cause #1: dictionary lookup.** The
+  bundled dictionary is loaded via `Resources.getIdentifier("main", "raw",
+  packageName)`, where `packageName` was hardcoded to the compile-time
+  Java package rather than the actual runtime package name
+  (`Context.getPackageName()`). Those only match when there's no
+  `applicationIdSuffix` -- the debug build adds one (`.codenameberyl`, so
+  it installs alongside a Play Store copy), so the lookup always silently
+  returned 0 and the dictionary never loaded. No crash, no suggestions,
+  ever. Fixed by passing the real runtime package name through.
+- **Suggestions never appearing, root cause #2: the legacy candidates
+  frame.** Even after the dictionary loaded correctly, the suggestion
+  strip stayed visually blank on the Android 15/XOS test device --
+  confirmed via targeted diagnostics that the dictionary, prediction
+  state, and computed suggestions were all correct; only the actual
+  on-screen rendering failed. Traced to `InputMethodService`'s own
+  "candidates frame" mechanism (`setCandidatesView()` +
+  `setCandidatesViewShown()`), which looks up its container via
+  `findViewById(android.R.id.candidatesArea)` inside the *platform's own*
+  default IME window layout -- a resource an OEM Android skin can
+  customize away. This matches a still-open upstream report
+  ([klausw/hackerskeyboard#964](https://github.com/klausw/hackerskeyboard/issues/964))
+  of the exact same "suggestions computed correctly, strip stays blank"
+  symptom on Android 13+. Fixed by no longer using that mechanism at all:
+  the candidate strip is now embedded as an ordinary child view stacked
+  above the keyboard, inside the same view `onCreateInputView()` returns
+  for the keyboard itself -- the one view guaranteed to actually render.
+- **Crash while fixing the above.** `KeyboardSwitcher`'s keyboard-view
+  (re)creation posts a `Runnable` that independently hands the bare
+  keyboard view to `InputMethodService.setInputView()`. Once the
+  suggestion-strip fix started wrapping that same view in its own
+  container, this posted call ran shortly after and tried to attach a
+  view that was already attached elsewhere -- Android throws for that,
+  unconditionally, on every keyboard open. Fixed by routing that call
+  through the same wrapper. `onCreateInputView()` and the new
+  `refreshInputView()` now both fall back to the bare keyboard view on
+  any `RuntimeException` from the wrapping logic, so an unforeseen edge
+  case in this area degrades to "no suggestion strip" rather than a
+  keyboard that won't open.
+- **Android 15 edge-to-edge.** Added
+  `android:windowOptOutEdgeToEdgeEnforcement="true"`, the official opt-out
+  for apps targeting SDK 35+ whose layouts (this one included -- fixed-dip
+  Views with no `WindowInsets` handling) don't account for it.
+
+**Known remaining issue:** the keyboard's landscape layout is cut off on
+the right edge on Android 15 --
+[klausw/hackerskeyboard#957](https://github.com/klausw/hackerskeyboard/issues/957),
+not yet fixed in this fork either.
