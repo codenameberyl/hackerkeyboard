@@ -148,6 +148,13 @@ public class InputLanguageSelection extends PreferenceActivity {
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         addPreferencesFromResource(R.xml.language_prefs);
+        // See pref_screen_header.xml's doc for why this screen needs its own header
+        // view rather than relying on the (legacy PreferenceActivity, Material3 theme)
+        // window title bar.
+        android.widget.TextView header = (android.widget.TextView) getLayoutInflater()
+                .inflate(R.layout.pref_screen_header, getListView(), false);
+        header.setText(R.string.language_selection_title);
+        getListView().addHeaderView(header);
         // Get the settings preferences
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         String selectedLanguagePref = sp.getString(LatinIME.PREF_SELECTED_LANGUAGES, "");

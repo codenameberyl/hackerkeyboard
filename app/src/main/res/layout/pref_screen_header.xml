@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Screen-title header, prepended above the first preference/category via
+    ListView#addHeaderView() in each PreferenceActivity subclass (LatinIMESettings,
+    PrefScreenActions/Feedback/View, InputLanguageSelection). PreferenceActivity is a
+    plain Activity, not AppCompatActivity, so it has no support-Toolbar of its own to
+    show a title in; the Theme.HackersKeyboard AppCompat/Material3 theme chain also
+    disables the legacy native window title bar those themes normally expect apps to
+    replace with their own Toolbar. Rather than fight that, this just prepends an
+    ordinary styled view as the screen's visible title; a plain, reliable ListView
+    API unaffected by any of that theme/window interaction. Text is set per-screen by
+    each Activity after inflating this layout.
+-->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="12dp"
+        android:textColor="@color/md_theme_onBackground"
+        android:textSize="22sp"
+        android:textStyle="bold" />

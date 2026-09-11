@@ -344,3 +344,31 @@ not yet fixed in this fork either.
 - **Added the naira sign (₦) as the first suggested punctuation**, per
   request -- `suggested_punctuations`/`suggested_punctuations_default`
   in `donottranslate.xml`.
+- **Settings screens still missing their title, even after the status
+  bar overlap fix.** Confirmed with a follow-up screenshot:
+  `fitsSystemWindows` fixed the overlap, but there was still no
+  "Settings for Hacker's Keyboard"-style heading above the first
+  category at all -- the legacy `android.preference.PreferenceActivity`
+  screens have no support-`Toolbar` of their own (they aren't
+  `AppCompatActivity`), and the `Theme.Material3.DayNight` chain
+  `Theme.HackersKeyboard` extends disables the old native window title
+  bar those screens would otherwise fall back to (AppCompat/Material
+  themes have always assumed you replace it with your own `Toolbar`,
+  since ActionBar-on-old-Android was originally backported that way).
+  Rather than fight that theme/window interaction, each of the five
+  `PreferenceActivity` screens (`LatinIMESettings`, `PrefScreenActions`/
+  `Feedback`/`View`, `InputLanguageSelection`) now prepends its own
+  title via the plain, reliable `ListView#addHeaderView()` API instead
+  -- a new `pref_screen_header.xml` layout, inflated and given the
+  screen's own title string in each Activity's `onCreate()`.
+- **App showing "HK codenameberyl" as its own name, not just in the
+  launcher.** `english_ime_name` -- the shared string used for the
+  launcher label *and* every in-app title (Home screen, every Settings
+  screen) -- had a debug-build-only override
+  (`app/src/debug/res/values/strings.xml`) to keep a sideloaded debug
+  build visually distinguishable from a future Play Store release.
+  That override leaked into the app's own UI text, not just the
+  launcher icon it was meant for. Removed; the debug build's
+  `versionNameSuffix` (already in `app/build.gradle`, shown on the
+  Home screen's version line) remains as a less intrusive way to tell
+  a debug build apart from a release one.

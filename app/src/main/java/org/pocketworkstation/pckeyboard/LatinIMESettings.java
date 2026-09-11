@@ -75,6 +75,13 @@ public class LatinIMESettings extends PreferenceActivity
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         addPreferencesFromResource(R.xml.prefs);
+        // See pref_screen_header.xml's doc for why this screen needs its own header
+        // view rather than relying on the (legacy PreferenceActivity, Material3 theme)
+        // window title bar.
+        android.widget.TextView header = (android.widget.TextView) getLayoutInflater()
+                .inflate(R.layout.pref_screen_header, getListView(), false);
+        header.setText(R.string.english_ime_settings);
+        getListView().addHeaderView(header);
         mQuickFixes = (CheckBoxPreference) findPreference(QUICK_FIXES_KEY);
         mVoicePreference = (ListPreference) findPreference(VOICE_SETTINGS_KEY);
         mSettingsKeyPreference = (ListPreference) findPreference(PREF_SETTINGS_KEY);

@@ -28,6 +28,13 @@ public class PrefScreenActions extends PreferenceActivity
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         addPreferencesFromResource(R.xml.prefs_actions);
+        // See pref_screen_header.xml's doc for why this screen needs its own header
+        // view rather than relying on the (legacy PreferenceActivity, Material3 theme)
+        // window title bar.
+        android.widget.TextView header = (android.widget.TextView) getLayoutInflater()
+                .inflate(R.layout.pref_screen_header, getListView(), false);
+        header.setText(R.string.pref_screen_actions_title);
+        getListView().addHeaderView(header);
         SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
         prefs.registerOnSharedPreferenceChangeListener(this);
     }

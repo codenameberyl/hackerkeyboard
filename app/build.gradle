@@ -32,10 +32,15 @@ android {
     }
     buildTypes {
         debug {
-            // Distinct applicationId + display name so a debug build can be
-            // installed side by side with the Play Store release instead of
-            // conflicting with it (same applicationId + different signing
-            // key would otherwise make Android refuse the install).
+            // Distinct applicationId so a debug build can be installed side
+            // by side with the Play Store release instead of conflicting
+            // with it (same applicationId + different signing key would
+            // otherwise make Android refuse the install). The version name
+            // below carries the distinguishing "codenameberyl" suffix
+            // instead of the app's own display name (english_ime_name),
+            // which briefly did too but leaked into the app's own in-app UI
+            // text (Home/Settings titles) -- not just the launcher icon --
+            // so that override was removed.
             applicationIdSuffix '.codenameberyl'
             versionNameSuffix ciShortSha != null
                     ? "-codenameberyl-${ciShortSha}" : '-codenameberyl-local'
