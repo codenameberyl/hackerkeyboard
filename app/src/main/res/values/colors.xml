@@ -72,17 +72,4 @@
     <color name="md_theme_surfaceVariant">#262626</color>
     <color name="md_theme_onSurfaceVariant">#A8A8A8</color>
     <color name="md_theme_outline">#262626</color>
-
-    <!-- Home screen (Main activity) only palette: see Theme.HackersKeyboard.Main
-         in themes.xml. Exact values from the reference app this screen is built
-         from (github.com/jcb1ee/hackerskeyboard2), light-mode side; the dark-mode
-         side is in values-night/colors.xml. Deliberately day/night-adaptive,
-         unlike the fixed md_theme_* palette above. -->
-    <color name="setup_primary">#1D2D44</color>
-    <color name="setup_on_primary">#F0EBD8</color>
-    <color name="setup_bg">#F0EBD8</color>
-    <color name="setup_surface">#FFFFFF</color>
-    <color name="setup_text_primary">#0D1321</color>
-    <color name="setup_text_secondary">#3E5C76</color>
-    <color name="setup_text_muted">#748CAB</color>
 </resources>

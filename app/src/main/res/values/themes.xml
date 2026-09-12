@@ -34,25 +34,20 @@
         <item name="android:fitsSystemWindows">true</item>
     </style>
 
-    <!-- Home screen (Main activity) only: the reference design this screen is
-         built from (github.com/jcb1ee/hackerskeyboard2's Theme.HackersKeyboard.Main)
-         uses a properly day/night-adaptive navy/cream palette, deliberately
-         different from the rest of this app's fixed black/yellow chrome above.
-         Kept scoped to Main via the manifest's per-activity android:theme
-         rather than replacing Theme.HackersKeyboard app-wide. NoActionBar
-         because the reference's Home screen has no native title bar; main.xml
-         already renders its own header (icon + app name + tagline), so one
-         would just be a redundant duplicate. -->
-    <style name="Theme.HackersKeyboard.Main" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/setup_primary</item>
-        <item name="colorOnPrimary">@color/setup_on_primary</item>
-        <item name="android:colorBackground">@color/setup_bg</item>
-        <item name="android:windowBackground">@color/setup_bg</item>
-        <item name="colorSurface">@color/setup_surface</item>
-        <item name="colorOnSurface">@color/setup_text_primary</item>
-        <item name="colorOnSurfaceVariant">@color/setup_text_secondary</item>
-        <item name="colorOnBackground">@color/setup_text_primary</item>
-        <item name="colorOutline">@color/setup_text_muted</item>
-        <item name="android:fitsSystemWindows">true</item>
+    <!-- Home screen (Main activity) only: its layout structure (card dimensions,
+         icon treatment, button sizing, the "try it out" field, etc.) is matched
+         to github.com/jcb1ee/hackerskeyboard2's Home screen, but its COLORS stay
+         this app's own black background + yellow accent. The reference app's
+         actual navy/cream palette was tried first and explicitly rejected in
+         favor of keeping this one, hence inheriting Theme.HackersKeyboard
+         wholesale rather than defining its own color set. NoActionBar because
+         main.xml already renders its own header (icon + app name + tagline), so
+         a native title bar would just be a redundant duplicate; windowActionBar/
+         windowNoTitle (rather than a NoActionBar parent theme) suppress it
+         without having to re-declare every color item Theme.HackersKeyboard
+         already sets. -->
+    <style name="Theme.HackersKeyboard.Main" parent="Theme.HackersKeyboard">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 </resources>

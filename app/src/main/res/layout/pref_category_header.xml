@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Section-header layout, applied via android:layout="@layout/pref_category_header"
-    to every PreferenceCategory across prefs*.xml, matching the "SETUP"/"TRY IT OUT"
-    section-label style on the Home screen (see main.xml). Keeps the framework's own
-    @android:id/title id, which PreferenceCategory (like any Preference) binds its
-    title text into.
+    to every PreferenceCategory across prefs*.xml. Dimensions/typography (no all-caps,
+    no extra letter-spacing, 14sp) match the plain default AndroidX Preference category
+    look: the reference app this is checked against
+    (github.com/jcb1ee/hackerskeyboard2) doesn't customize its category style at all,
+    it just themes the stock look, which this now matches, while keeping this app's
+    own black+yellow colorPrimary accent rather than adopting that reference's colors.
+    Keeps the framework's own @android:id/title id, which PreferenceCategory (like any
+    Preference) binds its title text into.
 -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@android:id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="16dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingBottom="8dp"
-        android:textAllCaps="true"
         android:textColor="?attr/colorPrimary"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.1" />
+        android:textSize="14sp"
+        android:textStyle="bold" />

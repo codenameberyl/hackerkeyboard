@@ -3,7 +3,11 @@
     Modern row layout, applied via android:layout="@layout/pref_item_row" to every
     non-category preference across prefs*.xml/language_prefs.xml, replacing the old
     system Preference row look with one that matches the black+yellow Home screen
-    (see values/themes.xml). Keeps the framework's own view ids
+    (see values/themes.xml) and the plain default AndroidX Preference row's own
+    dimensions/type scale (16sp title, 14sp secondary-colored summary): the
+    reference app checked for this (github.com/jcb1ee/hackerskeyboard2) doesn't
+    customize its row layout at all, it just themes that stock look. Keeps the
+    framework's own view ids
     (@android:id/title, @android:id/summary, @android:id/widget_frame) so the
     framework's normal Preference/CheckBoxPreference binding code, which looks up
     views by these exact ids, keeps working completely unchanged; only the visual
@@ -43,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
     </LinearLayout>
 
     <FrameLayout

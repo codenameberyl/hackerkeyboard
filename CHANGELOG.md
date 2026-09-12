@@ -524,3 +524,33 @@ not yet fixed in this fork either.
   the fold have no counterpart in the reference app; kept as-is since
   they're existing upstream functionality, not part of this redesign.
   All IDs `Main.java` looks up are unchanged.
+- **Home screen: kept this app's own black+yellow colors after all.**
+  The previous pass also adopted the reference app's actual navy/cream
+  palette along with its layout -- explicitly rejected: this app's
+  brand colors were never meant to change, only the Home screen's
+  layout/structure was meant to be checked against the reference.
+  `Theme.HackersKeyboard.Main` now simply inherits `Theme.HackersKeyboard`
+  (this app's existing fixed black/yellow theme) and only disables the
+  ActionBar, rather than defining its own `setup_*` color set; those
+  now-unused colors were removed from `colors.xml`/`values-night/colors.xml`.
+  `main.xml` needed no changes -- it already referenced colors purely
+  via theme attrs (`?attr/colorPrimary` etc.), so simply changing what
+  the theme maps them to was enough.
+- **Applied the same "check the reference app's UI, keep our own colors
+  and settings" treatment to the Settings screens.** Unlike Home,
+  jcb1ee/hackerskeyboard2's Settings doesn't customize its preference
+  row/category layouts at all -- it's the plain default AndroidX
+  Preference look, just themed with Material color attributes. Brought
+  this app's custom `pref_category_header.xml`/`pref_item_row.xml`
+  (built earlier in this modernization, before that reference existed)
+  in line with that stock look: category headers drop the all-caps +
+  0.1 letter-spacing treatment and move to 14sp (was 13sp all-caps),
+  matching default `Preference.Category` styling; row summaries move
+  from 13sp to 14sp, matching default secondary-text sizing. Colors
+  (this app's black+yellow, via the same theme attrs as before) and the
+  underlying `PreferenceActivity`-based framework/settings content are
+  unchanged -- migrating to AndroidX `PreferenceFragmentCompat` (what
+  the reference app actually uses, for a real ActionBar title instead
+  of this app's `addHeaderView` approach) would mean rewriting every
+  custom `Preference` subclass in this app and was out of scope for a
+  UI-only check.
