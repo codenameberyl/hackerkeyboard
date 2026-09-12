@@ -68,6 +68,7 @@
         </service>
 
         <activity android:name="Main" android:label="@string/english_ime_name"
+                android:theme="@style/Theme.HackersKeyboard.Main"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

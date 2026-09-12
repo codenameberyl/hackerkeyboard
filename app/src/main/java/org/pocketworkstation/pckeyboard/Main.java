@@ -42,13 +42,11 @@ public class Main extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        // main.xml already renders its own styled header (keycap icon + app name +
-        // tagline) as part of the redesigned card layout, so the native ActionBar
-        // title above it -- which just repeats the same app name in plain text --
-        // is a redundant duplicate rather than useful chrome. Hide it.
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().hide();
-        }
+        // main.xml already renders its own styled header (icon + app name +
+        // tagline), so a native ActionBar title repeating the same app name
+        // in plain text would just be a redundant duplicate. Theme.HackersKeyboard.Main
+        // (see the manifest's android:theme for this Activity) is a NoActionBar
+        // variant for exactly this reason, so there's nothing to hide here at runtime.
         String html = getString(R.string.main_body);
         // Html.fromHtml(String) is deprecated since API 24; the single-arg
         // form is kept only as the pre-24 fallback.
