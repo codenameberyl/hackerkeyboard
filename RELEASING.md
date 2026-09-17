@@ -72,8 +72,9 @@ testing" section for that one.
 ## Installing a signed release APK
 
 If the release's notes say the APK is signed, just install it:
-`adb install app-release.apk`, or copy it to the device and open it (with
-"install unknown apps" allowed for whichever app you copied it with). If you
+`adb install codenameberyl-hk-vX.Y.Z.apk` (the actual downloaded filename),
+or copy it to the device and open it (with "install unknown apps" allowed
+for whichever app you copied it with). If you
 already have a build of this app installed under a *different* signing key
 (e.g. an old self-signed build from before this release's key existed, or a
 Play Store release), Android refuses the install outright — same
@@ -94,12 +95,13 @@ with any key:
    ```
    Keep this file — you'll reuse it for every future update signed this
    same way, so later releases can install over earlier ones.
-2. Download `app-release-unsigned.apk` from the release's assets, then sign
-   it with [`apksigner`](https://developer.android.com/tools/apksigner)
-   (bundled with the Android SDK build-tools):
+2. Download the release APK (`codenameberyl-hk-vX.Y.Z.apk`) from the
+   release's assets, then sign it with
+   [`apksigner`](https://developer.android.com/tools/apksigner) (bundled
+   with the Android SDK build-tools):
    ```sh
    apksigner sign --ks my-local-key.jks \
        --ks-key-alias my-local-key \
-       --out app-release-signed.apk app-release-unsigned.apk
+       --out codenameberyl-hk-signed.apk codenameberyl-hk-vX.Y.Z.apk
    ```
 3. Install it the same way as a signed release APK, above.

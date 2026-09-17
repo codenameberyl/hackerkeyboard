@@ -185,23 +185,30 @@ jobs:
           echo "RELEASE_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
           echo "RELEASE_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
           echo "RELEASE_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "RELEASE_SIGNED=true" >> "$GITHUB_ENV"
 
       - name: Build release APK
         run: ./gradlew assembleRelease --stacktrace
 
-      # AGP names the output app-release.apk once a real signingConfig is
-      # applied, app-release-unsigned.apk otherwise -- find whichever one
-      # actually got built rather than hardcoding one filename.
+      # AGP names the output app-release.apk (signed) or app-release-unsigned.apk
+      # (not); renamed here to codenameberyl-hk-<tag>.apk so the downloaded
+      # asset is identifiable regardless of which one it started as. "signed"
+      # comes from RELEASE_SIGNED (set above, iff signing was actually
+      # configured) rather than sniffing the original filename.
       - name: Locate release APK
         id: apk
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
           APK_PATH=$(find app/build/outputs/apk/release -maxdepth 1 -name "*.apk" | head -n1)
           if [ -z "$APK_PATH" ]; then
             echo "No APK found under app/build/outputs/apk/release" >&2
             exit 1
           fi
-          echo "path=$APK_PATH" >> "$GITHUB_OUTPUT"
-          if [ "$(basename "$APK_PATH")" = "app-release.apk" ]; then
+          RENAMED_PATH="$(dirname "$APK_PATH")/codenameberyl-hk-${REF_NAME}.apk"
+          mv "$APK_PATH" "$RENAMED_PATH"
+          echo "path=$RENAMED_PATH" >> "$GITHUB_OUTPUT"
+          if [ "$RELEASE_SIGNED" = "true" ]; then
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
             echo "signed=false" >> "$GITHUB_OUTPUT"
