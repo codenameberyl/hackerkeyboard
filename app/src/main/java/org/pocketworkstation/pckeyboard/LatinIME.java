@@ -78,6 +78,7 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -3735,7 +3736,7 @@ public class LatinIME extends InputMethodService implements
         View empty = container.findViewById(R.id.clipboard_history_empty);
         LinearLayout list = container.findViewById(R.id.clipboard_history_list);
         list.removeAllViews();
-        List<String> history = mClipboardHistoryManager.getHistory();
+        List<ClipboardHistoryManager.Entry> history = mClipboardHistoryManager.getHistory();
         if (history.isEmpty()) {
             scroll.setVisibility(View.GONE);
             empty.setVisibility(View.VISIBLE);
@@ -3749,16 +3750,24 @@ public class LatinIME extends InputMethodService implements
         // own base theme doesn't define, which crashes here instead of just mis-coloring
         // once there's at least one history entry to actually inflate a row for.
         LayoutInflater inflater = LayoutInflater.from(container.getContext());
-        for (final String entry : history) {
-            TextView row = (TextView) inflater.inflate(
-                    R.layout.clipboard_history_item, list, false);
-            row.setText(entry);
-            row.setOnClickListener(v -> {
+        for (final ClipboardHistoryManager.Entry entry : history) {
+            View row = inflater.inflate(R.layout.clipboard_history_item, list, false);
+            TextView text = row.findViewById(R.id.clipboard_history_item_text);
+            text.setText(entry.text);
+            text.setOnClickListener(v -> {
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) {
-                    ic.commitText(entry, 1);
+                    ic.commitText(entry.text, 1);
                 }
                 hideClipboardHistory();
+            });
+            ImageButton pin = row.findViewById(R.id.clipboard_history_item_pin);
+            pin.setSelected(entry.pinned);
+            pin.setContentDescription(getString(entry.pinned
+                    ? R.string.clipboard_history_unpin : R.string.clipboard_history_pin));
+            pin.setOnClickListener(v -> {
+                mClipboardHistoryManager.togglePinned(entry.text);
+                populateClipboardHistoryList();
             });
             list.addView(row);
         }

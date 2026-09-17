@@ -3,7 +3,9 @@
     Shows a scrollable list of recently copied/cut text as an alternate IME input view,
     swapped in for the normal keyboard view via LatinIME.showClipboardHistory()/
     hideClipboardHistory() (see the "Clipboard" entry in the options menu). Tapping an
-    entry pastes it and returns to the keyboard; "Clear" wipes the whole history.
+    entry pastes it and returns to the keyboard; each entry also has a pin toggle
+    (clipboard_history_item.xml) that exempts it from both the history size cap and
+    "Clear", see ClipboardHistoryManager. Pinned entries are listed first.
     panel_switcher_row.xml (included below) switches straight to the keyboard,
     emoji picker, or the GIF/sticker picker without going back to the keyboard
     first; its own "clipboard" button is disabled here since this panel already

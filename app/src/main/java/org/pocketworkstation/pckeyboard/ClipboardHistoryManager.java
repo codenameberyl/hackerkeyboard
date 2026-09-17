@@ -26,6 +26,7 @@ import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,15 +37,36 @@ import java.util.List;
  * and prepended to a persisted list, so it can be pasted back later even after the item
  * has been overwritten by a subsequent copy. Shown via the "Clipboard" entry in the
  * options menu -- see LatinIME#showClipboardHistory().
+ *
+ * <p>Entries can be pinned ({@link #togglePinned}) so they survive both the MAX_ENTRIES
+ * cap and {@link #clear()} -- e.g. a phone number or address the user expects to keep
+ * pasting over the next few days, as opposed to whatever they happened to copy in
+ * between.
  */
 class ClipboardHistoryManager implements ClipboardManager.OnPrimaryClipChangedListener {
     private static final String TAG = "HK/ClipboardHistory";
     private static final String PREF_KEY = "clipboard_history";
+    private static final String JSON_KEY_TEXT = "text";
+    private static final String JSON_KEY_PINNED = "pinned";
     private static final int MAX_ENTRIES = 20;
+
+    /** A single clipboard history entry. Immutable -- {@link #togglePinned} replaces it. */
+    static final class Entry {
+        final String text;
+        final boolean pinned;
+
+        Entry(String text, boolean pinned) {
+            this.text = text;
+            this.pinned = pinned;
+        }
+    }
 
     private final Context mContext;
     private final ClipboardManager mClipboardManager;
-    private final List<String> mHistory = new ArrayList<>();
+    // Most-recently-copied first, without regard to pinned state -- see getHistory()
+    // for the pinned-first view shown in the UI, and trimUnpinned() for how the
+    // MAX_ENTRIES cap only ever evicts unpinned entries from here.
+    private final List<Entry> mHistory = new ArrayList<>();
 
     ClipboardHistoryManager(Context context) {
         mContext = context;
@@ -79,25 +101,73 @@ class ClipboardHistoryManager implements ClipboardManager.OnPrimaryClipChangedLi
         if (clip == null || clip.getItemCount() == 0) return;
         CharSequence text = clip.getItemAt(0).coerceToText(mContext);
         if (TextUtils.isEmpty(text)) return;
-        String entry = text.toString();
+        String entryText = text.toString();
         // If this text is already in the history (e.g. the user copied it again, or
         // pasted an existing entry back out), move it to the front instead of adding a
-        // duplicate.
-        mHistory.remove(entry);
-        mHistory.add(0, entry);
-        while (mHistory.size() > MAX_ENTRIES) {
-            mHistory.remove(mHistory.size() - 1);
+        // duplicate, carrying over whatever pinned state it already had.
+        boolean pinned = false;
+        for (int i = 0; i < mHistory.size(); i++) {
+            if (mHistory.get(i).text.equals(entryText)) {
+                pinned = mHistory.remove(i).pinned;
+                break;
+            }
+        }
+        mHistory.add(0, new Entry(entryText, pinned));
+        trimUnpinned();
+        save();
+    }
+
+    /** Removes the oldest unpinned entries past MAX_ENTRIES; pinned entries never count
+     * against the cap and are never removed here. */
+    private void trimUnpinned() {
+        int unpinnedCount = 0;
+        for (Entry entry : mHistory) {
+            if (!entry.pinned) unpinnedCount++;
+        }
+        for (int i = mHistory.size() - 1; i >= 0 && unpinnedCount > MAX_ENTRIES; i--) {
+            if (!mHistory.get(i).pinned) {
+                mHistory.remove(i);
+                unpinnedCount--;
+            }
+        }
+    }
+
+    /** Pinned entries first (most-recently-copied among those first), then unpinned
+     * entries, also most-recently-copied first. */
+    List<Entry> getHistory() {
+        List<Entry> ordered = new ArrayList<>(mHistory.size());
+        List<Entry> unpinned = new ArrayList<>();
+        for (Entry entry : mHistory) {
+            if (entry.pinned) {
+                ordered.add(entry);
+            } else {
+                unpinned.add(entry);
+            }
+        }
+        ordered.addAll(unpinned);
+        return ordered;
+    }
+
+    /** Flips the pinned state of the entry with this exact text, if it's still present. */
+    void togglePinned(String text) {
+        for (int i = 0; i < mHistory.size(); i++) {
+            Entry entry = mHistory.get(i);
+            if (entry.text.equals(text)) {
+                mHistory.set(i, new Entry(entry.text, !entry.pinned));
+                break;
+            }
         }
         save();
     }
 
-    /** Most-recently-copied entry first. */
-    List<String> getHistory() {
-        return mHistory;
-    }
-
+    /** Clears everything except pinned entries -- pinning is exactly the signal that an
+     * entry should survive this. */
     void clear() {
-        mHistory.clear();
+        for (int i = mHistory.size() - 1; i >= 0; i--) {
+            if (!mHistory.get(i).pinned) {
+                mHistory.remove(i);
+            }
+        }
         save();
     }
 
@@ -109,7 +179,14 @@ class ClipboardHistoryManager implements ClipboardManager.OnPrimaryClipChangedLi
         try {
             JSONArray arr = new JSONArray(json);
             for (int i = 0; i < arr.length(); i++) {
-                mHistory.add(arr.getString(i));
+                JSONObject obj = arr.optJSONObject(i);
+                if (obj != null) {
+                    mHistory.add(new Entry(obj.getString(JSON_KEY_TEXT),
+                            obj.optBoolean(JSON_KEY_PINNED, false)));
+                } else {
+                    // Pre-pinning format: a plain JSON string, always unpinned.
+                    mHistory.add(new Entry(arr.getString(i), false));
+                }
             }
         } catch (JSONException e) {
             Log.w(TAG, "Failed to parse saved clipboard history, discarding it", e);
@@ -119,8 +196,16 @@ class ClipboardHistoryManager implements ClipboardManager.OnPrimaryClipChangedLi
     private void save() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         JSONArray arr = new JSONArray();
-        for (String entry : mHistory) {
-            arr.put(entry);
+        for (Entry entry : mHistory) {
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put(JSON_KEY_TEXT, entry.text);
+                obj.put(JSON_KEY_PINNED, entry.pinned);
+            } catch (JSONException e) {
+                // Only thrown for a null key, which JSON_KEY_TEXT/JSON_KEY_PINNED never are.
+                throw new AssertionError(e);
+            }
+            arr.put(obj);
         }
         prefs.edit().putString(PREF_KEY, arr.toString()).apply();
     }

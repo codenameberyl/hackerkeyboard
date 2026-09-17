@@ -699,6 +699,8 @@
     <string name="clipboard_history_back_to_keyboard">ABC</string>
     <string name="clipboard_history_clear">Clear</string>
     <string name="clipboard_history_empty">No copied text yet</string>
+    <string name="clipboard_history_pin">Pin (keeps this entry when history fills up or is cleared)</string>
+    <string name="clipboard_history_unpin">Unpin</string>
     <string name="selectSticker">GIFs &amp; Stickers</string>
     <string name="sticker_not_supported">This text field doesn\'t support images or GIFs</string>
     <!-- Content description for the "back to keyboard" switcher button shared by the

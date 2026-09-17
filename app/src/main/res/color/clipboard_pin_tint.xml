@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tint for the clipboard history pin toggle (ic_pin.xml): the accent color once
+     pinned, a muted neutral otherwise. Applied via android:tint, so the button's
+     setSelected() state alone drives its appearance, see
+     LatinIME#populateClipboardHistoryList(). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorPrimary" android:state_selected="true" />
+    <item android:color="?attr/colorOnSurfaceVariant" />
+</selector>

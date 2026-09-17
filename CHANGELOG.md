@@ -574,3 +574,20 @@ not yet fixed in this fork either.
   one -- so the job still degrades gracefully to the old unsigned-release
   flow if the secrets are ever removed, with matching release notes
   either way.
+- **Release APKs are now named `codenameberyl-hk-<tag>.apk`** instead of
+  the AGP-default `app-release.apk`/`app-release-unsigned.apk`, so a
+  downloaded release asset is identifiable on its own. Done as a plain
+  `mv` in `build.yml`'s `Locate release APK` step rather than via AGP's
+  `applicationVariants` output-renaming API, to avoid risking a Gradle
+  configuration-time failure that would break every build task, not just
+  `assembleRelease`.
+- **Clipboard history pinning.** Each entry in the clipboard history panel
+  now has a pin toggle (`ic_pin`, tinted with the accent color once
+  pinned). Pinned entries are shown first, are exempt from the 20-entry
+  history cap (`ClipboardHistoryManager#trimUnpinned()` only ever evicts
+  unpinned entries), and survive "Clear" -- pinning is exactly the signal
+  that an entry (a phone number, an address) should stick around instead
+  of scrolling off after a few more copies. Persisted the same way as the
+  rest of the history, in the same `SharedPreferences` entry; existing
+  saved history (the old plain-string JSON format) loads correctly as
+  all-unpinned.
