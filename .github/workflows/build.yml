@@ -133,12 +133,11 @@ jobs:
   # A real, non-prerelease GitHub Release (as opposed to the rolling debug
   # prerelease above), cut by pushing a `vX.Y.Z` tag once build + tests are
   # green on that commit. This is *not* a Play Store submission -- the repo
-  # owner opted for GitHub Releases only, without setting up a dedicated
-  # signing key (see RELEASING.md) -- so the release APK is unsigned.
-  # Android's package installer refuses to install a completely unsigned
-  # APK as-is; RELEASING.md documents the one-command local signing step
-  # needed before it's installable, so this stays a deliberate, documented
-  # tradeoff rather than a broken download.
+  # owner opted for GitHub Releases only, self-signed via the RELEASE_*
+  # secrets below rather than Play App Signing (see RELEASING.md for how
+  # those secrets were generated and how to rotate them). If those secrets
+  # aren't configured on this repo, this job still runs and produces an
+  # unsigned APK exactly as it used to -- see the "Locate release APK" step.
   publish-stable-release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [build, instrumented-tests]
@@ -159,17 +158,53 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # Populates RELEASE_KEYSTORE_PATH/RELEASE_KEYSTORE_PASSWORD/
+      # RELEASE_KEY_ALIAS/RELEASE_KEY_PASSWORD (read by app/build.gradle's
+      # signingConfig) for every step after this one, via $GITHUB_ENV.
+      # Skipped entirely if the repo has no RELEASE_KEYSTORE_BASE64 secret,
+      # in which case those env vars simply stay unset and build.gradle
+      # falls back to its unsigned default -- no separate "is this repo
+      # configured for signing" branch needed anywhere else in this job.
+      - name: Configure release signing
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        run: |
+          KEYSTORE_PATH="$RUNNER_TEMP/release.keystore"
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
+          echo "RELEASE_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASSWORD=${{ secrets.RELEASE_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> "$GITHUB_ENV"
+
       - name: Build release APK
         run: ./gradlew assembleRelease --stacktrace
+
+      # AGP names the output app-release.apk once a real signingConfig is
+      # applied, app-release-unsigned.apk otherwise -- find whichever one
+      # actually got built rather than hardcoding one filename.
+      - name: Locate release APK
+        id: apk
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/release -maxdepth 1 -name "*.apk" | head -n1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No APK found under app/build/outputs/apk/release" >&2
+            exit 1
+          fi
+          echo "path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          if [ "$(basename "$APK_PATH")" = "app-release.apk" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk-unsigned
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: release-apk
+          path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
 
-      - name: Publish GitHub release
+      - name: Publish GitHub release (signed)
+        if: steps.apk.outputs.signed == 'true'
         uses: softprops/action-gh-release@v2
         with:
           name: "Hacker's Keyboard (by CodenameBeryl) ${{ github.ref_name }}"
@@ -179,17 +214,37 @@ jobs:
             Stable release ${{ github.ref_name }}, built from commit
             ${{ github.sha }}.
 
-            **The attached APK is unsigned.** This fork publishes to GitHub
-            Releases only (no Play Store submission), and does not manage a
-            dedicated signing key. Before you can install it, sign it
-            yourself -- see [RELEASING.md](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/RELEASING.md#installing-a-release-apk)
-            for the one-command local signing step. If you already have a
-            build of this app installed, it must be signed with the *same*
-            key as that install, or Android will refuse the install (same
-            applicationId, different signature).
+            The attached APK is signed and ready to install. If you already
+            have a build of this app installed under a *different* signing
+            key (e.g. a Play Store release, or a self-signed build from
+            before this release's signing key existed), Android will refuse
+            to install this over it -- uninstall the old one first.
 
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CHANGELOG.md)
             for what's changed since upstream `v1.41.1`.
-          files: app/build/outputs/apk/release/app-release-unsigned.apk
+          files: ${{ steps.apk.outputs.path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish GitHub release (unsigned)
+        if: steps.apk.outputs.signed != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Hacker's Keyboard (by CodenameBeryl) ${{ github.ref_name }}"
+          prerelease: false
+          draft: false
+          body: |
+            Stable release ${{ github.ref_name }}, built from commit
+            ${{ github.sha }}.
+
+            **The attached APK is unsigned** (this repo has no
+            `RELEASE_KEYSTORE_BASE64` secret configured -- see
+            RELEASING.md). Before you can install it, sign it yourself --
+            see [RELEASING.md](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/RELEASING.md#installing-a-release-apk)
+            for the one-command local signing step.
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CHANGELOG.md)
+            for what's changed since upstream `v1.41.1`.
+          files: ${{ steps.apk.outputs.path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

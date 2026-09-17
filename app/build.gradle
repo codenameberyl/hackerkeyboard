@@ -9,6 +9,20 @@ def ciRunNumber = System.getenv("GITHUB_RUN_NUMBER")
 def ciShortSha = System.getenv("GITHUB_SHA") != null
         ? System.getenv("GITHUB_SHA").substring(0, 7) : null
 
+// Release signing: entirely optional and env-var-driven, never checked into
+// the repo. Unset (the default -- any local build, any CI job that isn't
+// publish-stable-release) -> the release buildType below stays unsigned,
+// exactly as before this was added. Set (populated from GitHub Actions
+// secrets in build.yml's publish-stable-release job, or by hand for a local
+// signed build) -> assembleRelease produces a properly signed, installable
+// APK. See RELEASING.md for how to generate/provide these.
+def releaseKeystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+def releaseKeystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+def hasReleaseSigningConfig = releaseKeystorePath != null &&
+        releaseKeystorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null
+
 android {
     namespace 'org.pocketworkstation.pckeyboard'
     compileSdk 37
@@ -30,6 +44,16 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            release {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseKeystorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         debug {
             // Distinct applicationId so a debug build can be installed side
@@ -48,6 +72,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigningConfig) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     externalNativeBuild {

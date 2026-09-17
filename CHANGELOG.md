@@ -554,3 +554,23 @@ not yet fixed in this fork either.
   of this app's `addHeaderView` approach) would mean rewriting every
   custom `Preference` subclass in this app and was out of scope for a
   UI-only check.
+- **Release APKs are now signed automatically in CI**, per request ("sign
+  the APK using command line" -- a self-managed keystore rather than Play
+  App Signing, since this fork isn't going through Play Console).
+  Generated a release keystore via `keytool` and handed it to the repo
+  owner directly (never committed to this repo) along with the four
+  `RELEASE_KEYSTORE_BASE64`/`RELEASE_KEYSTORE_PASSWORD`/`RELEASE_KEY_ALIAS`/
+  `RELEASE_KEY_PASSWORD` values to add as GitHub Actions repo secrets --
+  see `RELEASING.md`'s new "one-time setup" section for exactly what to
+  add and where. `app/build.gradle`'s release `signingConfig` reads those
+  four values from environment variables and is applied only when all
+  four are present, so any build without them (any local build, any CI
+  job other than `publish-stable-release`) is completely unaffected and
+  keeps producing unsigned output exactly as before. `publish-stable-release`
+  (`build.yml`) now decodes the keystore secret and populates those
+  environment variables before `assembleRelease`, then locates whichever
+  APK filename AGP actually produced (`app-release.apk` once genuinely
+  signed vs. `app-release-unsigned.apk` otherwise) rather than assuming
+  one -- so the job still degrades gracefully to the old unsigned-release
+  flow if the secrets are ever removed, with matching release notes
+  either way.
