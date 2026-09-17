@@ -6,6 +6,7 @@ import android.content.Context;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -57,11 +58,16 @@ public class ClipboardHistoryViewTest {
 
         // The exact call LatinIME#populateClipboardHistoryList() makes for each history
         // entry: LayoutInflater.from(container.getContext()), not getLayoutInflater().
+        // clipboard_history_item.xml's root is a LinearLayout (text + pin toggle), not a
+        // bare TextView -- see LatinIME#populateClipboardHistoryList().
         LayoutInflater itemInflater = LayoutInflater.from(container.getContext());
-        TextView row = (TextView) itemInflater.inflate(
-                R.layout.clipboard_history_item, list, false);
+        View row = itemInflater.inflate(R.layout.clipboard_history_item, list, false);
         assertNotNull(row);
-        row.setText("test clip");
+        TextView text = row.findViewById(R.id.clipboard_history_item_text);
+        ImageButton pin = row.findViewById(R.id.clipboard_history_item_pin);
+        assertNotNull(text);
+        assertNotNull(pin);
+        text.setText("test clip");
         list.addView(row);
     }
 }
