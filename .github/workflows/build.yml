@@ -160,20 +160,31 @@ jobs:
 
       # Populates RELEASE_KEYSTORE_PATH/RELEASE_KEYSTORE_PASSWORD/
       # RELEASE_KEY_ALIAS/RELEASE_KEY_PASSWORD (read by app/build.gradle's
-      # signingConfig) for every step after this one, via $GITHUB_ENV.
-      # Skipped entirely if the repo has no RELEASE_KEYSTORE_BASE64 secret,
-      # in which case those env vars simply stay unset and build.gradle
-      # falls back to its unsigned default -- no separate "is this repo
-      # configured for signing" branch needed anywhere else in this job.
+      # signingConfig) for every step after this one, via $GITHUB_ENV. The
+      # presence check happens inside the shell script (not a step-level
+      # if:) specifically so this step always runs and secrets never need
+      # to be referenced from an if: condition. If the repo has no
+      # RELEASE_KEYSTORE_BASE64 secret, this is a no-op and those env vars
+      # simply stay unset -- build.gradle falls back to its unsigned
+      # default, no separate "is this repo configured for signing" branch
+      # needed anywhere else in this job.
       - name: Configure release signing
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No RELEASE_KEYSTORE_BASE64 secret configured; release APK will be unsigned."
+            exit 0
+          fi
           KEYSTORE_PATH="$RUNNER_TEMP/release.keystore"
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
           echo "RELEASE_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
-          echo "RELEASE_KEYSTORE_PASSWORD=${{ secrets.RELEASE_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
-          echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> "$GITHUB_ENV"
-          echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
 
       - name: Build release APK
         run: ./gradlew assembleRelease --stacktrace
