@@ -51,18 +51,22 @@ base64 -w0 release.jks   # paste this as RELEASE_KEYSTORE_BASE64
 1. Make sure `claude/hackers-keyboard-modernize-cz10e9` (or whatever branch
    you're releasing from) is green: build/lint + instrumented tests passing
    in [Actions](../../actions).
-2. Bump `versionName` in `app/build.gradle` if it doesn't already reflect
-   the release (e.g. `"v1.42.0"`).
-3. Tag the commit and push the tag:
+2. Tag the commit and push the tag:
    ```sh
-   git tag v1.42.0
-   git push origin v1.42.0
+   git tag v1.42.1
+   git push origin v1.42.1
    ```
-4. Pushing a `vX.Y.Z` tag triggers the `publish-stable-release` job: it
-   builds `assembleRelease` (signed, if the secrets above are configured),
-   waits on `build` + `instrumented-tests` for that same commit, and
-   publishes a real (non-prerelease, non-draft) GitHub Release named
-   `Hacker's Keyboard (by CodenameBeryl) vX.Y.Z` with the APK attached.
+   No `app/build.gradle` edit needed first -- the tag itself is the
+   version. `publish-stable-release` sets `RELEASE_VERSION_NAME` from
+   `github.ref_name` before building, which `versionName` in
+   `app/build.gradle` reads; the hardcoded fallback there only matters for
+   local/debug builds outside this job.
+3. Pushing a `vX.Y.Z` tag triggers the `publish-stable-release` job: it
+   builds `assembleRelease` (signed, if the secrets above are configured;
+   versioned and named `codenameberyl-hk-vX.Y.Z.apk`), waits on `build` +
+   `instrumented-tests` for that same commit, and publishes a real
+   (non-prerelease, non-draft) GitHub Release named `Hacker's Keyboard (by
+   CodenameBeryl) vX.Y.Z` with the APK attached.
 
 This is separate from the rolling `latest-debug-build` prerelease, which
 republishes an unsigned/debug-signed debug APK on every push to the

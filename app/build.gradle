@@ -9,6 +9,13 @@ def ciRunNumber = System.getenv("GITHUB_RUN_NUMBER")
 def ciShortSha = System.getenv("GITHUB_SHA") != null
         ? System.getenv("GITHUB_SHA").substring(0, 7) : null
 
+// versionName for a real release build: set by build.yml's publish-stable-release
+// job to the exact vX.Y.Z tag that triggered it, so cutting a release is just
+// "push a tag" -- nothing here ever needs hand-editing to match. Unset (any local
+// build, any CI job other than publish-stable-release) -> falls back to the
+// hardcoded default below, same as before this was added.
+def releaseVersionName = System.getenv("RELEASE_VERSION_NAME")
+
 // Release signing: entirely optional and env-var-driven, never checked into
 // the repo. Unset (the default -- any local build, any CI job that isn't
 // publish-stable-release) -> the release buildType below stays unsigned,
@@ -32,7 +39,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 37
         versionCode ciRunNumber != null ? (1041001 + Integer.parseInt(ciRunNumber)) : 1041001
-        versionName "v1.42.0"
+        versionName releaseVersionName != null ? releaseVersionName : "v1.42.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {

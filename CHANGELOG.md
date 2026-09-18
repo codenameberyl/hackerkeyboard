@@ -591,3 +591,10 @@ not yet fixed in this fork either.
   rest of the history, in the same `SharedPreferences` entry; existing
   saved history (the old plain-string JSON format) loads correctly as
   all-unpinned.
+- **Release `versionName` is now derived from the release tag itself**,
+  the same way `versionCode` was already derived from `GITHUB_RUN_NUMBER`.
+  `publish-stable-release` sets `RELEASE_VERSION_NAME` from
+  `github.ref_name` before `assembleRelease`; `app/build.gradle` reads it
+  when present, falling back to a hardcoded default for local/debug
+  builds. Cutting a release is now just "push a `vX.Y.Z` tag" -- no
+  `app/build.gradle` edit needed first to keep it in sync.

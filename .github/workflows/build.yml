@@ -158,6 +158,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # The tag that triggered this job (e.g. "v1.42.1") is the single source of
+      # truth for this release's version -- read by app/build.gradle's versionName
+      # and reused below for the renamed APK filename, so cutting a release is
+      # just "push a vX.Y.Z tag", nothing to hand-edit in build.gradle first.
+      - name: Set release version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: echo "RELEASE_VERSION_NAME=$REF_NAME" >> "$GITHUB_ENV"
+
       # Populates RELEASE_KEYSTORE_PATH/RELEASE_KEYSTORE_PASSWORD/
       # RELEASE_KEY_ALIAS/RELEASE_KEY_PASSWORD (read by app/build.gradle's
       # signingConfig) for every step after this one, via $GITHUB_ENV. The
@@ -197,15 +206,13 @@ jobs:
       # configured) rather than sniffing the original filename.
       - name: Locate release APK
         id: apk
-        env:
-          REF_NAME: ${{ github.ref_name }}
         run: |
           APK_PATH=$(find app/build/outputs/apk/release -maxdepth 1 -name "*.apk" | head -n1)
           if [ -z "$APK_PATH" ]; then
             echo "No APK found under app/build/outputs/apk/release" >&2
             exit 1
           fi
-          RENAMED_PATH="$(dirname "$APK_PATH")/codenameberyl-hk-${REF_NAME}.apk"
+          RENAMED_PATH="$(dirname "$APK_PATH")/codenameberyl-hk-${RELEASE_VERSION_NAME}.apk"
           mv "$APK_PATH" "$RENAMED_PATH"
           echo "path=$RENAMED_PATH" >> "$GITHUB_OUTPUT"
           if [ "$RELEASE_SIGNED" = "true" ]; then
