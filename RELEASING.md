@@ -68,10 +68,13 @@ base64 -w0 release.jks   # paste this as RELEASE_KEYSTORE_BASE64
    (non-prerelease, non-draft) GitHub Release named `Hacker's Keyboard (by
    CodenameBeryl) vX.Y.Z` with the APK attached.
 
-This is separate from the rolling `latest-debug-build` prerelease, which
+This is separate from the rolling `latest-debug-build` release, which
 republishes an unsigned/debug-signed debug APK on every push to the
 modernization branch for quick manual testing — see the README's "Manual
-testing" section for that one.
+testing" section for that one. It's a **draft**, not a public prerelease,
+so it doesn't clutter this repo's public Releases page; only accounts
+with write access to the repo can see or download it (GitHub → Releases,
+while signed in as a collaborator).
 
 ## Installing a signed release APK
 

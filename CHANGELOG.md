@@ -598,3 +598,10 @@ not yet fixed in this fork either.
   when present, falling back to a hardcoded default for local/debug
   builds. Cutting a release is now just "push a `vX.Y.Z` tag" -- no
   `app/build.gradle` edit needed first to keep it in sync.
+- **Rolling debug build is now a draft release, not a public prerelease.**
+  Same rolling `latest-debug-build` republish on every branch push as
+  before, just `draft: true` in `build.yml` now -- keeps the repo's public
+  Releases page showing only real stable releases instead of a debug
+  build alongside them. Only accounts with write access to the repo can
+  see or download a draft, so this is collaborator-only now rather than
+  public.

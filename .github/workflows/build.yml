@@ -38,17 +38,21 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
-      # A rolling pre-release, re-published (same tag, assets replaced) on
-      # every push to this branch, so there's always a downloadable APK on
-      # the repo's Releases page without needing CI artifact access or a
-      # local Android SDK. Gated to this branch specifically -- re-point
-      # (or remove) this when merging to the default branch.
+      # A rolling draft release, re-published (same tag, assets replaced) on
+      # every push to this branch, so there's always a downloadable APK for
+      # repo collaborators without needing CI artifact access or a local
+      # Android SDK. Draft rather than a public prerelease so it doesn't
+      # clutter the repo's public Releases page (a draft is visible only to
+      # accounts with write access -- see RELEASING.md). Gated to this
+      # branch specifically -- re-point (or remove) this when merging to
+      # the default branch.
       - name: Publish rolling debug release
         if: github.ref == 'refs/heads/claude/hackers-keyboard-modernize-cz10e9'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-debug-build
           name: Latest debug build (auto-updated)
+          draft: true
           prerelease: true
           body: |
             Automatically republished on every push to
